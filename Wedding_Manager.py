@@ -16,7 +16,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.master = master
         
         master.geometry("800x600")                           # Create instance      
-        master.title("Python GUI")                 # Add a title 
+        master.title("Wedding Central")                 # Add a title 
         
         #=================================================================================================
         # Establish Database Connection
@@ -24,7 +24,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.cursor = self.conn.cursor()
         # Create these tables if they don't already exist
         try:
-            self.cursor.execute("""CREATE TABLE people(firstname text, lastname text, address text, relationship text, status text)""")
+            self.cursor.execute("""CREATE TABLE people(firstname text, lastname text, address text, relationship text, numberofpeople int, status text, job text, notes text)""")
             self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
             #self.get_names = Tk.Entry(master, text"Enter His Name")
         except:
@@ -151,9 +151,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.status_listbox = Tk.OptionMenu(self.t, self.var2, "Invited", "Might Invite", "Coming", "Not Coming")
         self.var2.set("Invited")
         self.status_listbox.place(x=50, y=185)
+
+        self.people_nlabel = Tk.Label(self.t, text="Notes:")
+        self.people_nlabel.place(x=0, y=215)
+        self.people_ntext = Tk.Text(self.t, height=10)
+        self.people_ntext.pack(side="bottom", fill=Tk.X)
         
-        self.nbutton = Tk.Button(self.toolbar1, text="Save", height=2, width=5, command=self.save_person_db)
-        self.nbutton.pack(side="left", padx=2, pady=2)
+        self.sbutton = Tk.Button(self.toolbar1, text="Save", height=2, width=5, command=self.save_person_db)
+        self.sbutton.pack(side="left", padx=2, pady=2)
 
     def double_click(self, event):
         '''  set the double click status flag
