@@ -26,7 +26,19 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         try:
             self.cursor.execute("""CREATE TABLE people(firstname text, lastname text, address text, relationship text, numberofpeople int, status text, job text, notes text)""")
             self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
-            #self.get_names = Tk.Entry(master, text"Enter His Name")
+            self.message_window = Tk.Toplevel(self)
+            self.message_window.wm_title("Enter Names")
+            self.message_window.geometry("240x125")
+            self.his_label = Tk.Label(self.message_window, text="His Name:", padx=20, pady=5)
+            self.his_label.pack(anchor="nw")
+            self.his_ent = Tk.Entry(self.message_window, width=25)
+            self.his_ent.pack(anchor="nw", padx=20)
+            self.her_label = Tk.Label(self.message_window, text="Her Name:", padx=20)
+            self.her_label.pack(anchor="sw")
+            self.her_ent = Tk.Entry(self.message_window, width=25)
+            self.her_ent.pack(anchor="sw", padx=20)
+            self.names_b = Tk.Button(self.message_window, text="Submit")
+            self.names_b.pack(anchor="e", padx=20, pady=5)
         except:
             pass
             
@@ -117,7 +129,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def add_person_window(self):
         self.t = Tk.Toplevel(self)
-        self.t.wm_title("Window")
+        self.t.wm_title("Add Person")
         self.t.geometry("400x400")
         
         self.toolbar1 = Tk.Frame(self.t, bd=1, relief=Tk.RAISED)
@@ -141,8 +153,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.var1 = Tk.StringVar(self.t)
         self.relationship_label = Tk.Label(self.t, text="Relation:")
         self.relationship_label.place(x=0, y=155)
-        self.relationship_listbox = Tk.OptionMenu(self.t, self.var1, " ", "Coming", "Not Coming")
-        self.var1.set("Invited")
+        self.relationship_listbox = Tk.OptionMenu(self.t, self.var1, "Family", "Coming", "Not Coming")
+        self.var1.set("Friend")
         self.relationship_listbox.place(x=50, y=155)
         
         self.var2 = Tk.StringVar(self.t)
@@ -172,18 +184,19 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.add_person_window()
 
     def save_person_db(self):
-        self.var1 = self.n_ent.get() # Get firstname
-        self.var2 = self.ln_ent.get() # Get Lastname
-        self.var3 = self.address_text.get() # Get address
-        self.var4 = self.nent.get() # Get relationship
-        self.var5 = self.nent.get() # Get Status
+        self.var_n = self.n_ent.get() # Get firstname
+        self.var_ln = self.ln_ent.get() # Get Lastname
+        self.var_address = self.address_text.get("1.0", Tk.END) # Get address
+        self.var_relationship = self.var1.get() # Get relationship
+        self.var_status = self.var2.get() # Get Status
+        self.var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
-        sql = "INSERT INTO people (firstname, lastname, address, relationship, status) VALUES (?,?,?,?,?)"
-        self.res = cursor.execute(sql, (self.input,))
+        sql = "INSERT INTO people (firstname, lastname, address, relationship, status, notes) VALUES (?,?,?,?,?,?)"
+        self.res = self.cursor.execute(sql, (self.var_n, self.var_ln, self.var_address, self.var_relationship, self.var_status, self.var_notes))
         self.conn.commit()
         
         sql = "SELECT firstname, lastname, status, relationship FROM people WHERE firstname=?"
-        self.res = self.cursor.execute(sql, (self.input,))
+        self.res = self.cursor.execute(sql, (self.var_n,))
         for self.row in self.res:
             self.firstname = self.row[0]
             self.lastname = self.row[1]
@@ -204,22 +217,4 @@ def main():
     win.protocol("WM_DELETE_WINDOW", app.quit)
     win.mainloop()                     
     
-   
 main()
-            
-            
-            
-
-
-
-    
-
-        
-       
-        
-        
-        
-
-
-
-    
