@@ -25,20 +25,27 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # Create these tables if they don't already exist
         try:
             self.cursor.execute("""CREATE TABLE people(firstname text, lastname text, address text, relationship text, numberofpeople int, status text, job text, notes text)""")
+            self.cursor.execute("""CREATE TABLE couple(firstname text)""")
+            self.cursor.execute("""CREATE TABLE cousins(momside text, dadside text)""")
             self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
+            
             self.message_window = Tk.Toplevel(self)
             self.message_window.wm_title("Enter Names")
             self.message_window.geometry("240x125")
+            
             self.his_label = Tk.Label(self.message_window, text="His Name:", padx=20, pady=5)
             self.his_label.pack(anchor="nw")
             self.his_ent = Tk.Entry(self.message_window, width=25)
             self.his_ent.pack(anchor="nw", padx=20)
+            
             self.her_label = Tk.Label(self.message_window, text="Her Name:", padx=20)
             self.her_label.pack(anchor="sw")
             self.her_ent = Tk.Entry(self.message_window, width=25)
             self.her_ent.pack(anchor="sw", padx=20)
-            self.names_b = Tk.Button(self.message_window, text="Submit")
+            
+            self.names_b = Tk.Button(self.message_window, text="Submit", command=self.save_couple_db)
             self.names_b.pack(anchor="e", padx=20, pady=5)
+            
         except:
             pass
             
@@ -203,7 +210,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.status = self.row[2]
             self.relationship = self.row[3]
             self.tree.insert('', 'end', values=[self.firstname, self.lastname, self.status, self.relationship])
+
+    def save_couple_db(self):
+        self.his_name = self.his_ent.get()
+        self.her_name = self.her_ent.get()
         
+        sql = "INSERT INTO couple(firstname) VALUES (?)"
+        self.res = self.cursor.execute(sql, (self.his_name,))
+        self.res2 = self.cursor.execute(sql, (self.her_name,))
+ 
     def quit(self):
         self.master.destroy()
         self.cursor.close()
