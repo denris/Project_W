@@ -39,9 +39,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.sep_top = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
             self.sep_top.place(x=9, y=23, width=298)
             self.sep_left = ttk.Separator(self.message_window, orient=Tk.VERTICAL)
-            self.sep_left.place(x=9, y=23, height=35)
+            self.sep_left.place(x=9, y=23, height=33)
             self.sep_right = ttk.Separator(self.message_window, orient=Tk.VERTICAL)
-            self.sep_right.place(x=308, y=23, height=35)
+            self.sep_right.place(x=308, y=23, height=33)
             self.sep_bot = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
             self.sep_bot.place(x=9, y=55, width=298)
             
@@ -51,9 +51,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.his_ent.place(x=70, y=30)
             
             self.her_label = Tk.Label(self.message_window, text="Her Name:")
-            self.her_label.place(x=145, y=30)
+            self.her_label.place(x=150, y=30)
             self.her_ent = Tk.Entry(self.message_window, width=15)
-            self.her_ent.place(x=205, y=30)
+            self.her_ent.place(x=211, y=30)
             
             
 
