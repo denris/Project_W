@@ -24,27 +24,54 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.cursor = self.conn.cursor()
         # Create these tables if they don't already exist
         try:
-            self.cursor.execute("""CREATE TABLE people(firstname text, lastname text, address text, relationship text, numberofpeople int, status text, job text, notes text)""")
             self.cursor.execute("""CREATE TABLE couple(firstname text)""")
-            self.cursor.execute("""CREATE TABLE cousins(momside text, dadside text)""")
+            self.cursor.execute("""CREATE TABLE relations(hismomside text, hisdadside text, hermomside text, herdadside text)""")
+            self.cursor.execute("""CREATE TABLE people(firstname text, lastname text, address text, relationship text, numberofpeople int, status text, job text, notes text)""")
             self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
-            
+
             self.message_window = Tk.Toplevel(self)
-            self.message_window.wm_title("Enter Names")
+            self.message_window.wm_title("Enter Names & Families")
             self.message_window.geometry("240x125")
             
-            self.his_label = Tk.Label(self.message_window, text="His Name:", padx=20, pady=5)
-            self.his_label.pack(anchor="nw")
+            ### Label for couples Names
+            self.separator = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
+            self.separator.place(x=5, y=3, width=230)
+            
+            self.his_label = Tk.Label(self.message_window, text="His Name:")
+            self.his_label.place(x=5, y=8)
             self.his_ent = Tk.Entry(self.message_window, width=25)
-            self.his_ent.pack(anchor="nw", padx=20)
+            self.his_ent.place(x=75, y=8)
             
-            self.her_label = Tk.Label(self.message_window, text="Her Name:", padx=20)
-            self.her_label.pack(anchor="sw")
-            self.her_ent = Tk.Entry(self.message_window, width=25)
-            self.her_ent.pack(anchor="sw", padx=20)
+            # self.her_label = Tk.Label(self.message_window, text="Her Name:", padx=20)
+            # self.her_label.pack(anchor="sw")
+            # self.her_ent = Tk.Entry(self.message_window, width=25)
+            # self.her_ent.place(anchor="sw", padx=20)
             
-            self.names_b = Tk.Button(self.message_window, text="Submit", command=self.save_couple_db)
-            self.names_b.pack(anchor="e", padx=20, pady=5)
+            
+
+            #=====================================================================================
+            # self.his_dadside = Tk.Label(self.message_window, text="His Dad Side:", padx=20, pady=5)
+            # self.his_dadside.place(anchor="nw")
+            # self.his_dadside_ent = Tk.Entry(self.message_window, width=25)
+            # self.his_dadside_ent.place(anchor="nw", padx=20)
+            
+            # self.his_momside = Tk.Label(self.message_window, text="His Mom Side:", padx=20)
+            # self.his_momside.place(anchor="ew")
+            # self.his_momside_ent = Tk.Entry(self.message_window, width=25)
+            # self.his_momside_ent.place(anchor="ew", padx=20)
+
+            # self.her_dadside = Tk.Label(self.message_window, text="Her Dad Side:", padx=20, pady=5)
+            # self.her_dadside.place(anchor="nw")
+            # self.her_dadside_ent = Tk.Entry(self.message_window, width=25)
+            # self.her_dadside_ent.place(anchor="nw", padx=20)
+            
+            # self.her_momside = Tk.Label(self.message_window, text="Her Mom Side:", padx=20)
+            # self.her_momside.place(anchor="sw")
+            # self.her_momside_ent = Tk.Entry(self.message_window, width=25)
+            # self.her_momside_ent.place(anchor="sw", padx=20)
+            
+            # self.family_b = Tk.Button(self.message_window, text="Submit", command=self.save_couple_db)
+            # self.family_b.place(anchor="e", padx=20, pady=5)
             
         except:
             pass
@@ -74,7 +101,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.tab1 = ttk.Frame(self.tabControl)
         #tab1.grid(column=1,row=1,sticky='news')            # Create a tab 
-        self.tabControl.add(self.tab1, text='To do')
+        self.tabControl.add(self.tab1, text='All')
         self.tab1.dataCols = ("First Name", "Last Name", "Status", "Relationship")
         self.create_columns(self.tab1.dataCols, self.tab1)      # Add the tab
         
@@ -157,18 +184,32 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.address_text = Tk.Text(self.t, height=3, width=30)
         self.address_text.place(x=50, y=100)
 
-        self.var1 = Tk.StringVar(self.t)
+        self.relation = Tk.StringVar(self.t)
         self.relationship_label = Tk.Label(self.t, text="Relation:")
         self.relationship_label.place(x=0, y=155)
-        self.relationship_listbox = Tk.OptionMenu(self.t, self.var1, "Family", "Coming", "Not Coming")
-        self.var1.set("Friend")
+        self.relationship_listbox = Tk.OptionMenu(self.t, self.relation, "Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
+        self.relation.set("Friend")
         self.relationship_listbox.place(x=50, y=155)
+
+        self.family = Tk.StringVar(self.t)
+        self.family_label = Tk.Label(self.t, text="Family:")
+        self.family_label.place(x=150, y=155)
+        self.family_listbox = Tk.OptionMenu(self.t, self.family, "None")
+        self.family.set("None")
+        self.family_listbox.place(x=195, y=155)
+
+        self.n_coming = Tk.StringVar(self.t)
+        self.n_coming_label = Tk.Label(self.t, text="Number Coming:")
+        self.n_coming_label.place(x=150, y=185)
+        self.n_coming_listbox = Tk.OptionMenu(self.t, self.n_coming, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+        self.n_coming.set(1)
+        self.n_coming_listbox.place(x=250, y=185)
         
-        self.var2 = Tk.StringVar(self.t)
+        self.status = Tk.StringVar(self.t)
         self.status_label = Tk.Label(self.t, text="Status:")
         self.status_label.place(x=0, y=185)
-        self.status_listbox = Tk.OptionMenu(self.t, self.var2, "Invited", "Might Invite", "Coming", "Not Coming")
-        self.var2.set("Invited")
+        self.status_listbox = Tk.OptionMenu(self.t, self.status, "Invited", "Might Invite", "Coming", "Not Coming")
+        self.status.set("Invited")
         self.status_listbox.place(x=50, y=185)
 
         self.people_nlabel = Tk.Label(self.t, text="Notes:")
@@ -194,8 +235,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.var_n = self.n_ent.get() # Get firstname
         self.var_ln = self.ln_ent.get() # Get Lastname
         self.var_address = self.address_text.get("1.0", Tk.END) # Get address
-        self.var_relationship = self.var1.get() # Get relationship
-        self.var_status = self.var2.get() # Get Status
+        self.var_relationship = self.relation.get() # Get relationship
+        self.var_status = self.status.get() # Get Status
         self.var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
         sql = "INSERT INTO people (firstname, lastname, address, relationship, status, notes) VALUES (?,?,?,?,?,?)"
