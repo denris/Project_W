@@ -31,16 +31,22 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
             self.message_window = Tk.Toplevel(self)
             self.message_window.wm_title("Enter Names & Families")
-            self.message_window.geometry("240x125")
+            self.message_window.geometry("300x125")
             
             ### Label for couples Names
-            self.separator = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
-            self.separator.place(x=5, y=3, width=230)
+            self.top_label = Tk.Label(self.message_window, font=("Helvetica", 10, "bold italic"), text="Couple's Names")
+            self.top_label.place(x=5, y=3)
+            self.sep_top = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
+            self.sep_top.place(x=5, y=23, width=230)
+            self.sep_left = ttk.Separator(self.message_window, orient=Tk.VERTICAL)
+            self.sep_left.place(x=3, y=23, height=75)
+            self.sep_right = ttk.Separator(self.message_window, orient=Tk.VERTICAL)
+            self.sep_right.place(x=295, y=20, height=75)
             
             self.his_label = Tk.Label(self.message_window, text="His Name:")
-            self.his_label.place(x=5, y=8)
-            self.his_ent = Tk.Entry(self.message_window, width=25)
-            self.his_ent.place(x=75, y=8)
+            self.his_label.place(x=5, y=30)
+            self.his_ent = Tk.Entry(self.message_window, width=15)
+            self.his_ent.place(x=75, y=30)
             
             # self.her_label = Tk.Label(self.message_window, text="Her Name:", padx=20)
             # self.her_label.pack(anchor="sw")
