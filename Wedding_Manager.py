@@ -105,6 +105,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.button = Tk.Button(self.toolbar, image=self.add_person_image, command=self.add_person)
         self.button.pack(side="left", padx=2, pady=2)
         
+        self.button.bind("<Enter>", lambda event: self.button.configure(bg="red"))
+        self.button.bind("<Leave>", lambda event: self.button.configure(bg="white"))
+        
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", padx=2, fill=Tk.BOTH)
         
