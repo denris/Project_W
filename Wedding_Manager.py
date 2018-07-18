@@ -28,7 +28,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         try:
             self.cursor.execute("""CREATE TABLE couple(hisname text, hername text)""")
             self.cursor.execute("""CREATE TABLE relations(hisdadside text, herdadside text, hismomside text, hermomside text)""")
-            self.cursor.execute("""CREATE TABLE people(firstname text, lastname text, address text, relationship text, family text, numberofpeople int, status text, job text, notes text)""")
+            self.cursor.execute("""CREATE TABLE people(firstname text, lastname text, address text, relationship text, family text,\
+                                numberofpeople int, status text, job text, notes text)""")
             self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
 
             self.message_window = Tk.Toplevel(self)
