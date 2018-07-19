@@ -120,12 +120,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.style.configure("Treeview", foreground='black')
         
         
-
+        treename = "all_people"
         self.tab1 = ttk.Frame(self.tabControl)
         #tab1.grid(column=1,row=1,sticky='news')            # Create a tab 
         self.tabControl.add(self.tab1, text='All')
         self.tab1.dataCols = ("First Name", "Last Name", "Relationship", "Status")
-        self.create_columns(self.tab1.dataCols, self.tab1)      # Add the tab
+        self.create_columns(self.tab1.dataCols, self.tab1, treename)      # Add the tab
         
         #===========================Creating Tab Control======================================================================
         
@@ -136,7 +136,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         #========================Creating Methods=========================================================================
     
-    def create_columns(self, dataCols, tab):
+    def create_columns(self, dataCols, tab, tree):
         # Adding the Columns for organization
         self.columns_tab1 = ttk.Frame(tab)
         self.columns_tab1.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
@@ -166,22 +166,22 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         self.tree.bind("<Double-1>", self.OnDoubleClick)
     def load_people_data(self):
-        self.data = []
+        data = []
         # add data to the tree 
         sql = "SELECT firstname, lastname, status, relationship FROM people"
-        self.res = self.cursor.execute(sql)
-        for self.row in self.res:
-            self.firstname = self.row[0]
-            self.lastname = self.row[1]
+        res = self.cursor.execute(sql)
+        for row in res:
+            firstname = row[0]
+            lastname = row[1]
             # self.address = self.row[2]
-            self.status = self.row[2]
-            self.relationship = self.row[3]
+            status = row[2]
+            relationship = row[3]
             
-            self.data.append([self.firstname, self.lastname, self.status, self.relationship])
+            data.append([firstname, lastname, status, relationship])
         
         
-        for item in self.data: 
-            self.tree.insert('', 'end', text=item[0], tags = [self.status,], values=item)
+        for item in data: 
+            self.tree.insert('', 'end', text=item[0], tags = [status,], values=item)
         
     def add_person_window(self):
         self.person_window = Tk.Toplevel(self)
