@@ -116,8 +116,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tabControl = ttk.Notebook(master)          # Create Tab Control
         self.tabControl.pack(expand=1, fill="both")  # Pack to make visible
         self.style = ttk.Style()
-        self.style.configure(".", font=('Helvetica', 8), foreground="black")
+        self.style.configure(".", font=("Times", 12), foreground="black")
         self.style.configure("Treeview", foreground='black')
+        
         
 
         self.tab1 = ttk.Frame(self.tabControl)
@@ -143,7 +144,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # create the tree and scrollbars
         self.dataCols = dataCols       
         self.tree = ttk.Treeview(columns=self.dataCols, show= 'headings')
-        
+        self.tree.tag_configure("Invited", foreground='purple')
+
         ysb = ttk.Scrollbar(orient=Tk.VERTICAL, command= self.tree.yview)
         xsb = ttk.Scrollbar(orient=Tk.HORIZONTAL, command= self.tree.xview)
         self.tree['yscroll'] = ysb.set
@@ -172,14 +174,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.firstname = self.row[0]
             self.lastname = self.row[1]
             # self.address = self.row[2]
-            self.relationship = self.row[2]
-            self.status = self.row[3]
+            self.status = self.row[2]
+            self.relationship = self.row[3]
+            
             self.data.append([self.firstname, self.lastname, self.status, self.relationship])
         
         
         for item in self.data: 
-            self.tree.insert('', 'end', text=item[0], values=item)
-
+            self.tree.insert('', 'end', text=item[0], tags = [self.status,], values=item)
+        
     def add_person_window(self):
         self.person_window = Tk.Toplevel(self)
         self.person_window.wm_title("Add Person")
@@ -263,57 +266,63 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     
     def OnDoubleClick(self, event):
-        self.selection = self.tree.item(self.tree.selection())['values'][0]
-        self.selection1 = self.tree.item(self.tree.selection())['values'][1]
+        selection = self.tree.item(self.tree.selection())['values'][0]
+        selection1 = self.tree.item(self.tree.selection())['values'][1]
         sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
-        self.id = self.cursor.execute(sql, (self.selection, self.selection1))
+        self.id = self.cursor.execute(sql, (selection, selection1))
         sql = "SELECT * FROM people WHERE ID=(?)"
-        for self.row in self.id:
-             rowid = self.row
-        self.view = self.cursor.execute(sql, (rowid))
+        for row in self.id:
+             self.rowid = row
+        view = self.cursor.execute(sql, (self.rowid))
         
-        for self.info in self.view:
-            self.view_first = self.info[1]
-            self.view_last = self.info[2]
-            self.view_addr = self.info[3]
-            self.view_relation = self.info[4]
-            self.view_fam = self.info[5]
-            self.view_numofpep = self.info[6]
-            self.view_stat = self.info[7]
-            self.view_job = self.info[8]
-            self.view_table = self.info[9]
-            self.view_notes = self.info[10]
+        for info in view:
+            view_first = info[1]
+            view_last = info[2]
+            view_addr = info[3]
+            view_relation = info[4]
+            view_fam = info[5]
+            view_numofpep = info[6]
+            view_stat = info[7]
+            view_job = info[8]
+            view_table = info[9]
+            view_notes = info[10]
             
-            self.update_view_person_db(self.info[1], self.info[2], self.info[3], self.info[4], self.info[5], \
-                                       self.info[6], self.info[7], self.info[8], self.info[9], self.info[10])
+            self.update_view_person_db(info[1], info[2], info[3], info[4], info[5], \
+                                       info[6], info[7], info[8], info[9], info[10])
         
     
     def save_person_db(self):
-        self.var_n = self.n_ent.get() # Get firstname
-        self.var_ln = self.ln_ent.get() # Get Lastname
-        self.var_address = self.address_text.get("1.0", Tk.END) # Get address
-        self.var_relationship = self.relation.get() # Get relationship
-        self.var_fam = self.family.get() # Get Family
-        self.var_numofpep = self.n_coming.get() # Get number Coming
-        self.var_status = self.status.get() # Get Status
-        self.var_job = self.job.get() # Get Job
-        self.var_tablenum = self.table.get()
-        self.var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
+        var_n = self.n_ent.get() # Get firstname
+        var_ln = self.ln_ent.get() # Get Lastname
+        var_address = self.address_text.get("1.0", Tk.END) # Get address
+        var_relationship = self.relation.get() # Get relationship
+        var_fam = self.family.get() # Get Family
+        var_numofpep = self.n_coming.get() # Get number Coming
+        var_status = self.status.get() # Get Status
+        var_job = self.job.get() # Get Job
+        var_tablenum = self.table.get()
+        var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
         sql = "INSERT INTO people (firstname, lastname, address, relationship, family, numberofpeople, status, job, tablenumber, notes) VALUES (?,?,?,?,?,?,?,?,?,?)"
-        self.res = self.cursor.execute(sql, (self.var_n, self.var_ln, self.var_address, self.var_relationship, self.var_fam, self.var_numofpep, self.var_status, self.var_job, self.var_tablenum, self.var_notes))
+        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes))
         self.conn.commit()
         
-        sql = "SELECT firstname, lastname, status, relationship FROM people WHERE firstname=?"
-        self.res = self.cursor.execute(sql, (self.var_n,))
-        for self.row in self.res:
-            self.firstname = self.row[0]
-            self.lastname = self.row[1]
-            self.status = self.row[2]
-            self.relationship = self.row[3]
-            self.tree.insert('', 'end', text=self.firstname ,values=[self.firstname, self.lastname, self.status, self.relationship])
+        sql = "SELECT ID FROM people WHERE firstname=(?)"
+        rowid = self.cursor.execute(sql, (var_n,))
+        sql = "SELECT firstname, lastname, status, relationship FROM people WHERE ID=?"
+        for row in rowid:
+            rowid = row
+            
+        res = self.cursor.execute(sql, (rowid[0],))
         
-        self.destroy_window(self.person_window)
+        for row in res:
+            firstname = row[0]
+            lastname = row[1]
+            status = row[2]
+            relationship = row[3]
+            self.tree.insert('', 'end', text=firstname ,values=[firstname, lastname, status, relationship])
+        
+        #self.destroy_window(self.person_window)
 
     def save_cupfam_db(self):
         self.his_name = self.his_ent.get()
@@ -421,32 +430,38 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.table.set(table)
         self.people_ntext.insert(Tk.CURRENT, notes)
 
-        self.update_person_image = Tk.PhotoImage(file="update_person.gif")
-        self.u_person_but = Tk.Button(self.toolbar1, text="Update", image=self.update_person_image, command=self.update_person_db)
+        #self.update_person_image = Tk.PhotoImage(file="update_person.gif") #image=self.update_person_image,
+        self.u_person_but = Tk.Button(self.toolbar1, text="Update",  command=self.update_person_db)
         self.u_person_but.pack(side="left", padx=2, pady=2)
     
     def add_person(self):
         self.add_person_window()
 
     def update_person_db(self):
-        self.var_n = self.n_ent.get() # Get firstname
-        self.var_ln = self.ln_ent.get() # Get Lastname
-        self.var_address = self.address_text.get("1.0", Tk.END) # Get address
-        self.var_relationship = self.relation.get() # Get relationship
-        self.var_fam = self.family.get() # Get Family
-        self.var_numofpep = self.n_coming.get() # Get number Coming
-        self.var_status = self.status.get() # Get Status
-        self.var_job = self.job.get() # Get Job
-        self.var_tablenum = self.table.get()
-        self.var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
+        var_n = self.n_ent.get() # Get firstname
+        var_ln = self.ln_ent.get() # Get Lastname
+        var_address = self.address_text.get("1.0", Tk.END) # Get address
+        var_relationship = self.relation.get() # Get relationship
+        var_fam = self.family.get() # Get Family
+        var_numofpep = self.n_coming.get() # Get number Coming
+        var_status = self.status.get() # Get Status
+        var_job = self.job.get() # Get Job
+        var_tablenum = self.table.get()
+        var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
-        sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), relationship=(?), family=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE firstname=(?) AND lastname=(?)"
-        self.res = self.cursor.execute(sql, (self.var_n, self.var_ln, self.var_address, self.var_relationship, self.var_fam, self.var_numofpep, self.var_status, self.var_job, self.var_tablenum, self.var_notes, self.selection, self.selection1))
+        sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), relationship=(?), family=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes, self.rowid[0]))
         self.conn.commit()
         
-        self.tree.delete(self.tree.selection())
-        self.tree.insert('', 'end', text=self.var_n ,values=[self.var_n, self.var_ln, self.var_status, self.var_relationship])
-        self.destroy_window(self.view_person)
+        self.old_entry = self.tree.selection()
+        
+        try:
+            self.tree.delete(self.old_entry)
+        except:
+            self.tree.delete(self.new_entry)
+        
+        self.new_entry = self.tree.insert('', 'end', text=var_n, tags=[var_status,], values=[var_n, var_ln, var_status, var_relationship])
+        
         
     def destroy_window(self, window):
         window.destroy()
