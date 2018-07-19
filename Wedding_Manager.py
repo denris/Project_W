@@ -130,10 +130,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #===========================Creating Tab Control======================================================================
         
         self.tab2 = ttk.Frame(self.tabControl)            # Create a tab 
-        self.tabControl.add(self.tab2, text='Invited')      # Add the tab
-        self.label2 = Tk.Label(self.tab2, text="Denver")
-        self.label2.grid(row=1, column=0)
-        
+        self.tabControl.add(self.tab2, text='Things To Get')      # Add the tab
+        self.create_columns(self.tab1.dataCols, self.tab2)
         #========================Creating Methods=========================================================================
     
     def create_columns(self, dataCols, tab):
@@ -307,20 +305,21 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes))
         self.conn.commit()
         
-        sql = "SELECT ID FROM people WHERE firstname=(?)"
-        rowid = self.cursor.execute(sql, (var_n,))
-        sql = "SELECT firstname, lastname, status, relationship FROM people WHERE ID=?"
-        for row in rowid:
-            rowid = row
+        self.load_people_data()
+        # sql = "SELECT ID FROM people WHERE firstname=(?)"
+        # rowid = self.cursor.execute(sql, (var_n,))
+        # sql = "SELECT firstname, lastname, status, relationship FROM people WHERE ID=?"
+        # for row in rowid:
+        #     rowid = row
             
-        res = self.cursor.execute(sql, (rowid[0],))
+        # res = self.cursor.execute(sql, (rowid[0],))
         
-        for row in res:
-            firstname = row[0]
-            lastname = row[1]
-            status = row[2]
-            relationship = row[3]
-            self.tree.insert('', 'end', text=firstname ,values=[firstname, lastname, status, relationship])
+        # for row in res:
+        #     firstname = row[0]
+        #     lastname = row[1]
+        #     status = row[2]
+        #     relationship = row[3]
+        #     self.tree.insert('', 'end', text=firstname ,values=[firstname, lastname, status, relationship])
         
         #self.destroy_window(self.person_window)
 
