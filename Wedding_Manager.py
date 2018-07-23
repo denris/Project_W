@@ -22,7 +22,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # Establish Database Connection
         self.conn = sqlite3.connect("W_management.db") # or use :memory: to put it in RAM
         self.cursor = self.conn.cursor()
-        self.jobs = ["Photographer", "Server", "Sermon"]
+        self.jobs = ["Photographer", "Server", "Sermon", "Git Receiver"]
         
         # Create these tables if they don't already exist
         try:
@@ -236,7 +236,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.job = Tk.StringVar(self.person_window)
         self.jobs_label = Tk.Label(self.person_window, text="Job:")
         self.jobs_label.place(x=300, y=50)
-        self.jobs_box = Tk.OptionMenu(self.person_window, self.job, self.jobs[0], self.jobs[1], self.jobs[2])
+        self.jobs_box = Tk.OptionMenu(self.person_window, self.job, *self.jobs)
         self.job.set(self.jobs[0])
         self.jobs_box.place(x=325, y=50)
 
@@ -305,6 +305,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes))
         self.conn.commit()
         
+        self.tree.delete(*self.tree.get_children())
         self.load_people_data()
         # sql = "SELECT ID FROM people WHERE firstname=(?)"
         # rowid = self.cursor.execute(sql, (var_n,))
@@ -395,7 +396,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.job = Tk.StringVar(self.view_person)
         self.jobs_label = Tk.Label(self.view_person, text="Job:")
         self.jobs_label.place(x=300, y=50)
-        self.jobs_box = Tk.OptionMenu(self.view_person, self.job, self.jobs[0], self.jobs[1], self.jobs[2])
+        self.jobs_box = Tk.OptionMenu(self.view_person, self.job, *self.jobs)
         self.job.set(self.jobs[0])
         self.jobs_box.place(x=325, y=50)
 
@@ -452,14 +453,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes, self.rowid[0]))
         self.conn.commit()
         
-        self.old_entry = self.tree.selection()
+        self.tree.delete(*self.tree.get_children())
+        self.load_people_data()
+        # self.old_entry = self.tree.selection()
         
-        try:
-            self.tree.delete(self.old_entry)
-        except:
-            self.tree.delete(self.new_entry)
+        # try:
+        #     self.tree.delete(self.old_entry)
+        # except:
+        #     self.tree.delete(self.new_entry)
         
-        self.new_entry = self.tree.insert('', 'end', text=var_n, tags=[var_status,], values=[var_n, var_ln, var_status, var_relationship])
+        # self.new_entry = self.tree.insert('', 'end', text=var_n, tags=[var_status,], values=[var_n, var_ln, var_status, var_relationship])
         
         
     def destroy_window(self, window):
