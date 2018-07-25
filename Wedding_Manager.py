@@ -102,14 +102,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.toolbar.pack(anchor="n", fill=Tk.X)
         
         self.add_person_image = Tk.PhotoImage(file='add_person.gif')
-        self.button = Tk.Button(self.toolbar, image=self.add_person_image, command=self.add_person, relief="flat")
-        self.button.pack(side="left", padx=2, pady=2)
-        
-        self.button.bind("<Enter>", lambda event: self.button.configure(bg="darkgreen"))
-        self.button.bind("<Leave>", lambda event: self.button.configure(bg="white"))
+        self.button = ttk.Button(self.toolbar, image=self.add_person_image, text="Add Person", compound=Tk.TOP, command=self.add_person)
+        self.button.pack(side="left")
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
-        self.separator1.pack(side="left", padx=2, fill=Tk.BOTH)
+        self.separator1.pack(side="left", padx=1, fill=Tk.BOTH)
         
         #=================================================================================================
         
@@ -118,69 +115,84 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.style = ttk.Style()
         self.style.configure(".", font=("Times", 12), foreground="black")
         self.style.configure("Treeview", foreground='black')
+        self.style.configure("TButton", font=("Ariel", 8, 'bold', 'italic'), relief="sunken")
         
         
-        treename = "all_people"
-        self.tab1 = ttk.Frame(self.tabControl)
-        #tab1.grid(column=1,row=1,sticky='news')            # Create a tab 
-        self.tabControl.add(self.tab1, text='All')
-        self.tab1.dataCols = ("First Name", "Last Name", "Relationship", "Status")
-        self.create_columns(self.tab1.dataCols, self.tab1, treename)      # Add the tab
+         
+        self.all_people_tab = ttk.Frame(self.tabControl) 
+        self.tabControl.add(self.all_people_tab, text='All')
+        self.people_dataCols = ("First Name", "Last Name", "Status", "Relationship")
+        
+        # Adding Frames for the Columns for organization
+        self.all_people_columns = ttk.Frame(self.all_people_tab)
+        
+        # create the tree and scrollbars
+             
+        self.all_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
+             
+        self.create_columns(self.people_dataCols, self.all_people_columns, self.all_people)      # Add the tab
         
         #===========================Creating Tab Control======================================================================
         
-        self.tab2 = ttk.Frame(self.tabControl)            # Create a tab 
-        self.tabControl.add(self.tab2, text='Things To Get')      # Add the tab
-        self.create_columns(self.tab1.dataCols, self.tab2)
+        self.family_tab = ttk.Frame(self.tabControl)            # Create a tab 
+        self.tabControl.add(self.family_tab, text='Family')      # Add the tab
+        
+        self.family_columns = ttk.Frame(self.family_tab)
+
+        self.family_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
+
+        self.create_columns(self.people_dataCols, self.family_columns, self.family_people)
         #========================Creating Methods=========================================================================
     
-    def create_columns(self, dataCols, tab, tree):
-        # Adding the Columns for organization
-        self.columns_tab1 = ttk.Frame(tab)
-        self.columns_tab1.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
-        
-        # create the tree and scrollbars
-        self.dataCols = dataCols       
-        self.tree = ttk.Treeview(columns=self.dataCols, show= 'headings')
-        self.tree.tag_configure("Invited", foreground='purple')
-
-        ysb = ttk.Scrollbar(orient=Tk.VERTICAL, command= self.tree.yview)
-        xsb = ttk.Scrollbar(orient=Tk.HORIZONTAL, command= self.tree.xview)
-        self.tree['yscroll'] = ysb.set
-        self.tree['xscroll'] = xsb.set
-        
+    def create_columns(self, dataCols, columns, tree):
+        columns.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+        ysb = ttk.Scrollbar(orient=Tk.VERTICAL, command= tree.yview)
+        xsb = ttk.Scrollbar(orient=Tk.HORIZONTAL, command= tree.xview)
+        tree['yscroll'] = ysb.set
+        tree['xscroll'] = xsb.set
+        tree.tag_configure("Invited", foreground='purple')
+        tree.tag_configure("Coming", foreground='darkgreen')
         # add tree and scrollbars to frame
-        self.tree.grid(in_=self.columns_tab1, row=0, column=0, sticky=Tk.NSEW)
-        ysb.grid(in_=self.columns_tab1, row=0, column=1, sticky=Tk.NS)
-        xsb.grid(in_=self.columns_tab1, row=1, column=0, sticky=Tk.EW)
+        tree.grid(in_=columns, row=0, column=0, sticky=Tk.NSEW)
+        ysb.grid(in_=columns, row=0, column=1, sticky=Tk.NS)
+        xsb.grid(in_=columns, row=1, column=0, sticky=Tk.EW)
         
         # set frame resize priorities
-        self.columns_tab1.rowconfigure(0, weight=1)
-        self.columns_tab1.columnconfigure(0, weight=1)
-
-        for n in self.dataCols:
-            self.tree.heading(n, text=n.title())
+        columns.rowconfigure(0, weight=1)
+        columns.columnconfigure(0, weight=1)
+        
+        for n in dataCols:
+            tree.heading(n, text=n.title())
+        
+        
         self.load_people_data()
         
-        self.tree.bind("<Double-1>", self.OnDoubleClick)
+        tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
+        
+
     def load_people_data(self):
-        data = []
+        
         # add data to the tree 
-        sql = "SELECT firstname, lastname, status, relationship FROM people"
+        sql = "SELECT firstname, lastname, status, relationship, family FROM people"
         res = self.cursor.execute(sql)
         for row in res:
             firstname = row[0]
             lastname = row[1]
-            # self.address = self.row[2]
             status = row[2]
             relationship = row[3]
+            family = row[4]
             
-            data.append([firstname, lastname, status, relationship])
-        
-        
-        for item in data: 
-            self.tree.insert('', 'end', text=item[0], tags = [status,], values=item)
-        
+            
+            
+            
+            self.all_people.insert('', 'end', tags = [status], values=[firstname, lastname, status, relationship])
+            try: 
+                if family != "None":
+                    
+                    self.family_people.insert('', 'end', tags = [status], values=[firstname, lastname, status, relationship])
+            except:
+                self.all_people.delete(*self.all_people.get_children())
+                
     def add_person_window(self):
         self.person_window = Tk.Toplevel(self)
         self.person_window.wm_title("Add Person")
@@ -259,13 +271,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.people_ntext = Tk.Text(self.person_window, height=10)
         self.people_ntext.pack(side="bottom", fill=Tk.X)
 
-        self.sbutton = Tk.Button(self.toolbar1, text="Save", height=2, width=5, command=self.save_person_db)
-        self.sbutton.pack(side="left", padx=2, pady=2)
+        self.save_image = Tk.PhotoImage(file="save.gif")
+        self.sbutton = ttk.Button(self.toolbar1, text="Save", width=7, image=self.save_image, compound=Tk.TOP, command=self.save_person_db)
+        self.sbutton.pack(side="left")
 
     
-    def OnDoubleClick(self, event):
-        selection = self.tree.item(self.tree.selection())['values'][0]
-        selection1 = self.tree.item(self.tree.selection())['values'][1]
+    def OnDoubleClick(self, event, tree):
+        selection = tree.item(tree.selection())['values'][0]
+        selection1 = tree.item(tree.selection())['values'][1]
         sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
         self.id = self.cursor.execute(sql, (selection, selection1))
         sql = "SELECT * FROM people WHERE ID=(?)"
@@ -305,22 +318,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes))
         self.conn.commit()
         
-        self.tree.delete(*self.tree.get_children())
+        # Update Tree
+        self.family_people.delete(*self.family_people.get_children())
+        self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
-        # sql = "SELECT ID FROM people WHERE firstname=(?)"
-        # rowid = self.cursor.execute(sql, (var_n,))
-        # sql = "SELECT firstname, lastname, status, relationship FROM people WHERE ID=?"
-        # for row in rowid:
-        #     rowid = row
-            
-        # res = self.cursor.execute(sql, (rowid[0],))
         
-        # for row in res:
-        #     firstname = row[0]
-        #     lastname = row[1]
-        #     status = row[2]
-        #     relationship = row[3]
-        #     self.tree.insert('', 'end', text=firstname ,values=[firstname, lastname, status, relationship])
         
         #self.destroy_window(self.person_window)
 
@@ -430,9 +432,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.table.set(table)
         self.people_ntext.insert(Tk.CURRENT, notes)
 
-        #self.update_person_image = Tk.PhotoImage(file="update_person.gif") #image=self.update_person_image,
-        self.u_person_but = Tk.Button(self.toolbar1, text="Update",  command=self.update_person_db)
-        self.u_person_but.pack(side="left", padx=2, pady=2)
+        self.update_person_image = Tk.PhotoImage(file="update_person.gif")
+        self.u_person_but = ttk.Button(self.toolbar1, text="Update", image=self.update_person_image, compound=Tk.TOP, width=7, command=self.update_person_db)
+        self.u_person_but.pack(side="left")
     
     def add_person(self):
         self.add_person_window()
@@ -453,17 +455,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes, self.rowid[0]))
         self.conn.commit()
         
-        self.tree.delete(*self.tree.get_children())
+        self.family_people.delete(*self.family_people.get_children())
+        self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
-        # self.old_entry = self.tree.selection()
-        
-        # try:
-        #     self.tree.delete(self.old_entry)
-        # except:
-        #     self.tree.delete(self.new_entry)
-        
-        # self.new_entry = self.tree.insert('', 'end', text=var_n, tags=[var_status,], values=[var_n, var_ln, var_status, var_relationship])
-        
         
     def destroy_window(self, window):
         window.destroy()
