@@ -16,13 +16,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.master = master
         
         master.geometry("800x600")                           # Create instance      
-        master.title("Wedding Central")                 # Add a title 
+        master.title("Wedding Central")
+        master.configure(background="gray")                 # Add a title 
         
         #=================================================================================================
         # Establish Database Connection
         self.conn = sqlite3.connect("W_management.db") # or use :memory: to put it in RAM
         self.cursor = self.conn.cursor()
         self.jobs = ["Photographer", "Server", "Sermon", "Git Receiver"]
+        self.total_cost = 0.00
+        self.budget = 0.00
         
         # Create these tables if they don't already exist
         try:
@@ -98,9 +101,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         #==========================Define our Application================================================
         
-        
         self.toolbar = Tk.Frame(master, bd=1, relief=Tk.RAISED)
-        self.toolbar.pack(anchor="n", fill=Tk.X, padx=5)
+        self.toolbar.pack(anchor="n", fill=Tk.X)
         
         self.add_person_image = Tk.PhotoImage(file='add_person.gif')
         self.button = ttk.Button(self.toolbar, image=self.add_person_image, text="Add Person", compound=Tk.TOP, command=self.add_person)
@@ -109,24 +111,43 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", padx=1, fill=Tk.BOTH)
         
+        #========================Main Frame=========================================================================
+       
+        self.main_frame = Tk.Frame(master, borderwidth=2, relief=Tk.SUNKEN)
+        self.main_frame.pack(expand=1, fill=Tk.BOTH, padx=5, pady=5)
+
+        self.bottom_frame = Tk.Frame(master, height=25)
+        self.bottom_frame.pack(side="bottom", fill=Tk.X)
+        
+        ### Fill bottom_frame ###
+        self.total_cost_price_label = Tk.Label(self.bottom_frame, text="${:.2f}".format(self.total_cost), font=("Arial", 10,"bold"))
+        self.total_cost_price_label.pack(side="right")
+        self.total_cost_label = Tk.Label(self.bottom_frame, text="Total Cost:", font=("Arial", 10,"bold"))
+        self.total_cost_label.pack(side="right")
+        
+
+        self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), font=("Arial", 10,"bold"))
+        self.budget_label.pack(side="left")
+        if self.total_cost <= self.budget:
+            self.total_cost_price_label.configure(fg="darkgreen")
+        else:
+            self.total_cost_price_label.configure(fg="red")
         #=================================================================================================
-        self.search_frame = Tk.Frame(master)
-        self.search_frame.pack(anchor="n", fill=Tk.X, pady=6, padx=5)
-        self.search_label = Tk.Label(self.search_frame, text="Search:")
+        self.search_frame = Tk.Frame(self.main_frame)
+        self.search_frame.pack(anchor="n", fill=Tk.X, pady=5)
+        self.search_label = Tk.Label(self.search_frame, text="Search:", font=("Arial", 11))
         self.search_label.pack(side="left")
         self.search = Tk.Entry(self.search_frame)
         self.search.pack(anchor="w", fill=Tk.X)
         #=================================================================================================
         
-        self.tabControl = ttk.Notebook(master)          # Create Tab Control
-        self.tabControl.pack(expand=1, fill="both", padx=5)  # Pack to make visible
+        self.tabControl = ttk.Notebook(self.main_frame)          # Create Tab Control
+        self.tabControl.pack(expand=1, fill=Tk.BOTH)  # Pack to make visible
         self.style = ttk.Style()
         self.style.configure(".", font=("Times", 12), foreground="black")
         self.style.configure("Treeview", foreground='black')
         self.style.configure("TButton", font=("Ariel", 8, 'bold', 'italic'), relief="sunken")
         
-        
-         
         self.all_people_tab = ttk.Frame(self.tabControl) 
         self.tabControl.add(self.all_people_tab, text='All')
         self.people_dataCols = ("First Name", "Last Name", "Status", "Relationship")
@@ -463,7 +484,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     
     def add_person(self):
         self.add_person_window()
-
+        
     def destroy_window(self, window):
         window.destroy()
     
@@ -479,6 +500,7 @@ def main():
         
     win = Tk.Tk()
     app = Application(win)
+    
     win.protocol("WM_DELETE_WINDOW", app.quit_main)
     win.mainloop()                     
     
