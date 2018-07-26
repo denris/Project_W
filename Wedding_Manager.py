@@ -139,6 +139,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.search_label.pack(side="left")
         self.search = Tk.Entry(self.search_frame)
         self.search.pack(anchor="w", fill=Tk.X)
+
+        self.search.bind("<Return>", self.search_db)
         #=================================================================================================
         
         self.tabControl = ttk.Notebook(self.main_frame)          # Create Tab Control
@@ -197,8 +199,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_people_data()
         
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
-        
+        tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
+
     def load_people_data(self):
+        # Clear the tree
+        self.all_people.delete(*self.all_people.get_children())
         
         # add data to the tree 
         sql = "SELECT firstname, lastname, status, relationship, family FROM people"
@@ -210,16 +215,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             relationship = row[3]
             family = row[4]
             
-            
-            
-            
             self.all_people.insert('', 'end', tags = [status], values=[firstname, lastname, status, relationship])
             try: 
                 if family != "None":
-                    
                     self.family_people.insert('', 'end', tags = [status], values=[firstname, lastname, status, relationship])
             except:
-                self.all_people.delete(*self.all_people.get_children())
+                pass
                 
     def add_person_window(self):
         self.person_window = Tk.Toplevel(self)
@@ -481,7 +482,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
-    
+
+    def search_db(self, event):
+        results = self.search.get()
+        sql = "Select * FROM sqlite_master WHERE type='table'"
+        res = self.cursor.execute(sql)
+        for tablerow in res.fetchall():
+            table = tablerow
+            print table
     def add_person(self):
         self.add_person_window()
         
