@@ -95,23 +95,31 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             
         except:
             pass
-            
+        
         #==========================Define our Application================================================
         
+        
         self.toolbar = Tk.Frame(master, bd=1, relief=Tk.RAISED)
-        self.toolbar.pack(anchor="n", fill=Tk.X)
+        self.toolbar.pack(anchor="n", fill=Tk.X, padx=5)
         
         self.add_person_image = Tk.PhotoImage(file='add_person.gif')
         self.button = ttk.Button(self.toolbar, image=self.add_person_image, text="Add Person", compound=Tk.TOP, command=self.add_person)
-        self.button.pack(side="left")
+        self.button.pack(side="left",)
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", padx=1, fill=Tk.BOTH)
         
         #=================================================================================================
+        self.search_frame = Tk.Frame(master)
+        self.search_frame.pack(anchor="n", fill=Tk.X, pady=6, padx=5)
+        self.search_label = Tk.Label(self.search_frame, text="Search:")
+        self.search_label.pack(side="left")
+        self.search = Tk.Entry(self.search_frame)
+        self.search.pack(anchor="w", fill=Tk.X)
+        #=================================================================================================
         
         self.tabControl = ttk.Notebook(master)          # Create Tab Control
-        self.tabControl.pack(expand=1, fill="both")  # Pack to make visible
+        self.tabControl.pack(expand=1, fill="both", padx=5)  # Pack to make visible
         self.style = ttk.Style()
         self.style.configure(".", font=("Times", 12), foreground="black")
         self.style.configure("Treeview", foreground='black')
