@@ -169,7 +169,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
         
-
     def load_people_data(self):
         
         # add data to the tree 
@@ -275,74 +274,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.sbutton = ttk.Button(self.toolbar1, text="Save", width=7, image=self.save_image, compound=Tk.TOP, command=self.save_person_db)
         self.sbutton.pack(side="left")
 
-    
-    def OnDoubleClick(self, event, tree):
-        selection = tree.item(tree.selection())['values'][0]
-        selection1 = tree.item(tree.selection())['values'][1]
-        sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
-        self.id = self.cursor.execute(sql, (selection, selection1))
-        sql = "SELECT * FROM people WHERE ID=(?)"
-        for row in self.id:
-             self.rowid = row
-        view = self.cursor.execute(sql, (self.rowid))
-        
-        for info in view:
-            view_first = info[1]
-            view_last = info[2]
-            view_addr = info[3]
-            view_relation = info[4]
-            view_fam = info[5]
-            view_numofpep = info[6]
-            view_stat = info[7]
-            view_job = info[8]
-            view_table = info[9]
-            view_notes = info[10]
-            
-            self.update_view_person_db(info[1], info[2], info[3], info[4], info[5], \
-                                       info[6], info[7], info[8], info[9], info[10])
-        
-    
-    def save_person_db(self):
-        var_n = self.n_ent.get() # Get firstname
-        var_ln = self.ln_ent.get() # Get Lastname
-        var_address = self.address_text.get("1.0", Tk.END) # Get address
-        var_relationship = self.relation.get() # Get relationship
-        var_fam = self.family.get() # Get Family
-        var_numofpep = self.n_coming.get() # Get number Coming
-        var_status = self.status.get() # Get Status
-        var_job = self.job.get() # Get Job
-        var_tablenum = self.table.get()
-        var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
-        
-        sql = "INSERT INTO people (firstname, lastname, address, relationship, family, numberofpeople, status, job, tablenumber, notes) VALUES (?,?,?,?,?,?,?,?,?,?)"
-        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes))
-        self.conn.commit()
-        
-        # Update Tree
-        self.family_people.delete(*self.family_people.get_children())
-        self.all_people.delete(*self.all_people.get_children())
-        self.load_people_data()
-        
-        
-        #self.destroy_window(self.person_window)
-
-    def save_cupfam_db(self):
-        self.his_name = self.his_ent.get()
-        self.her_name = self.her_ent.get()
-        self.his_dadside_fam = self.his_dadside_ent.get()
-        self.her_dadside_fam = self.her_dadside_ent.get()
-        self.his_momside_fam = self.his_momside_ent.get()
-        self.her_momside_fam = self.her_momside_ent.get()
-        
-        sql = "INSERT INTO couple(hisname, hername) VALUES (?,?)"
-        self.ins_cup = self.cursor.execute(sql, (self.his_name, self.her_name,))
-
-        sql2 = "INSERT INTO relations(hisdadside, herdadside, hismomside, hermomside) VALUES (?,?,?,?)"
-        self.ins_fam2 = self.cursor.execute(sql2, (self.his_dadside_fam, self.her_dadside_fam, self.his_momside_fam, self.her_momside_fam))
-        self.conn.commit()
-        self.destroy_window(self.message_window)
-
-    def update_view_person_db(self, firstname, lastname, address, relationship, family, numofpep, status, job, table, notes):
+    def update_view_person_window(self, firstname, lastname, address, relationship, family, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
         self.view_person.wm_title("View/Update")
         self.view_person.geometry("450x400")
@@ -436,8 +368,70 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.u_person_but = ttk.Button(self.toolbar1, text="Update", image=self.update_person_image, compound=Tk.TOP, width=7, command=self.update_person_db)
         self.u_person_but.pack(side="left")
     
-    def add_person(self):
-        self.add_person_window()
+    def OnDoubleClick(self, event, tree):
+        selection = tree.item(tree.selection())['values'][0]
+        selection1 = tree.item(tree.selection())['values'][1]
+        sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
+        self.id = self.cursor.execute(sql, (selection, selection1))
+        sql = "SELECT * FROM people WHERE ID=(?)"
+        for row in self.id:
+             self.rowid = row
+        view = self.cursor.execute(sql, (self.rowid))
+        
+        for info in view:
+            view_first = info[1]
+            view_last = info[2]
+            view_addr = info[3]
+            view_relation = info[4]
+            view_fam = info[5]
+            view_numofpep = info[6]
+            view_stat = info[7]
+            view_job = info[8]
+            view_table = info[9]
+            view_notes = info[10]
+            
+            self.update_view_person_window(info[1], info[2], info[3], info[4], info[5], \
+                                       info[6], info[7], info[8], info[9], info[10])
+        
+    def save_person_db(self):
+        var_n = self.n_ent.get() # Get firstname
+        var_ln = self.ln_ent.get() # Get Lastname
+        var_address = self.address_text.get("1.0", Tk.END) # Get address
+        var_relationship = self.relation.get() # Get relationship
+        var_fam = self.family.get() # Get Family
+        var_numofpep = self.n_coming.get() # Get number Coming
+        var_status = self.status.get() # Get Status
+        var_job = self.job.get() # Get Job
+        var_tablenum = self.table.get()
+        var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
+        
+        sql = "INSERT INTO people (firstname, lastname, address, relationship, family, numberofpeople, status, job, tablenumber, notes) VALUES (?,?,?,?,?,?,?,?,?,?)"
+        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes))
+        self.conn.commit()
+        
+        # Update Tree
+        self.family_people.delete(*self.family_people.get_children())
+        self.all_people.delete(*self.all_people.get_children())
+        self.load_people_data()
+        
+        
+        #self.destroy_window(self.person_window)
+
+    def save_cupfam_db(self):
+        self.his_name = self.his_ent.get()
+        self.her_name = self.her_ent.get()
+        self.his_dadside_fam = self.his_dadside_ent.get()
+        self.her_dadside_fam = self.her_dadside_ent.get()
+        self.his_momside_fam = self.his_momside_ent.get()
+        self.her_momside_fam = self.her_momside_ent.get()
+        
+        sql = "INSERT INTO couple(hisname, hername) VALUES (?,?)"
+        self.ins_cup = self.cursor.execute(sql, (self.his_name, self.her_name,))
+
+        sql2 = "INSERT INTO relations(hisdadside, herdadside, hismomside, hermomside) VALUES (?,?,?,?)"
+        self.ins_fam2 = self.cursor.execute(sql2, (self.his_dadside_fam, self.her_dadside_fam, self.his_momside_fam, self.her_momside_fam))
+        self.conn.commit()
+        self.destroy_window(self.message_window)
 
     def update_person_db(self):
         var_n = self.n_ent.get() # Get firstname
@@ -458,7 +452,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
-        
+    
+    def add_person(self):
+        self.add_person_window()
+
     def destroy_window(self, window):
         window.destroy()
     
