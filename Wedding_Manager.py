@@ -209,9 +209,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def load_people_data(self):
         # Clear the tree
         self.all_people.delete(*self.all_people.get_children())
-        
+        try:
+            self.family_people.delete(*self.family_people.get_children())
+        except:
+            pass
+
         # add data to the tree 
-        sql = "SELECT firstname, lastname, phone, numberofpeople, status, job, relationship FROM people"
+        sql = "SELECT firstname, lastname, phone, numberofpeople, status, job, relationship, family FROM people"
         res = self.cursor.execute(sql)
         self.conn.commit()
         for row in res:
@@ -222,6 +226,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             status = row[4]
             job = row[5]
             relationship = row[6]
+            family = row[7]
             
             
             self.all_people.insert('', 'end', tags = [status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
@@ -307,10 +312,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_listbox.grid(row=5, column=1, sticky="w")
 
         self.n_coming = Tk.StringVar(self.middle_frame)
-        self.n_coming_label = Tk.Label(self.middle_frame, text="Number Coming:", foreground="white", background="gray12")
+        self.n_coming_label = Tk.Label(self.middle_frame, text="Num Coming:", foreground="white", background="gray12")
         self.n_coming_label.grid(row=4, column=1, sticky="e")
         self.n_coming_listbox = Tk.OptionMenu(self.middle_frame, self.n_coming, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-        self.n_coming_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=3)
+        self.n_coming_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
         self.n_coming.set(1)
         self.n_coming_listbox.grid(row=4, column=2, sticky="w")
         
@@ -326,7 +331,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tablenum_label = Tk.Label(self.middle_frame, text="Table:", foreground="white", background="gray12")
         self.tablenum_label.grid(row=5, column=1, sticky="e")
         self.tablenum_box = Tk.OptionMenu(self.middle_frame, self.table, 1, 2)
-        self.tablenum_box.configure(highlightbackground="black", background="gray12", foreground="white", width=3)
+        self.tablenum_box.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
         self.table.set(100)
         self.tablenum_box.grid(row=5, column=2, sticky="w")
         
@@ -349,7 +354,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
-        self.view_person.wm_title("View/Update")
+        self.update_window_title(firstname, lastname)
         self.view_person.geometry("500x500")
         
         
@@ -409,10 +414,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_listbox.grid(row=5, column=1, sticky="w")
 
         self.n_coming = Tk.StringVar(self.middle_frame)
-        self.n_coming_label = Tk.Label(self.middle_frame, text="Number Coming:", foreground="white", background="gray12")
+        self.n_coming_label = Tk.Label(self.middle_frame, text="Num Coming:", foreground="white", background="gray12")
         self.n_coming_label.grid(row=4, column=1, sticky="e")
         self.n_coming_listbox = Tk.OptionMenu(self.middle_frame, self.n_coming, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-        self.n_coming_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=3)
+        self.n_coming_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
         self.n_coming.set(1)
         self.n_coming_listbox.grid(row=4, column=2, sticky="w")
         
@@ -428,7 +433,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tablenum_label = Tk.Label(self.middle_frame, text="Table:", foreground="white", background="gray12")
         self.tablenum_label.grid(row=5, column=1, sticky="e")
         self.tablenum_box = Tk.OptionMenu(self.middle_frame, self.table, 1, 2)
-        self.tablenum_box.configure(highlightbackground="black", background="gray12", foreground="white", width=3)
+        self.tablenum_box.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
         self.table.set(100)
         self.tablenum_box.grid(row=5, column=2, sticky="w")
         
@@ -555,6 +560,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
+        self.update_window_title(var_n, var_ln)
 
     def search_db(self, event):
         results = self.search.get()
@@ -566,6 +572,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             print table
     def add_person(self):
         self.add_person_window()
+
+    def update_window_title(self, firstname, lastname):
+        self.view_person.wm_title(" " + firstname + " " + lastname)
         
     def destroy_window(self, window):
         window.destroy()
