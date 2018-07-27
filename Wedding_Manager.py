@@ -15,7 +15,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         Tk.PhotoImage.__init__(self)
         self.master = master
         
-        master.geometry("1500x800")                           # Create instance      
+        master.geometry("1400x800")                           # Create instance      
         master.title("Wedding Central")
         master.configure(background="gray")                 # Add a title 
         
@@ -23,7 +23,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # Establish Database Connection
         self.conn = sqlite3.connect("W_management.db") # or use :memory: to put it in RAM
         self.cursor = self.conn.cursor()
-        self.jobs = ["Photographer", "Server", "Sermon", "Git Receiver"]
+        self.jobs = ["None", "Photographer", "Server", "Sermon", "Git Receiver"]
         self.total_cost = 0.00
         self.budget = 0.00
         # Setting flag for sorting columns
@@ -34,7 +34,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE couple(hisname text, hername text)""")
             self.cursor.execute("""CREATE TABLE relations(hisdadside text, herdadside text, hismomside text, hermomside text)""")
             self.cursor.execute("""CREATE TABLE people(ID integer PRIMARY KEY AUTOINCREMENT, firstname text, lastname text, address text, phone text, relationship text, family text,\
-                                numberofpeople int, status text, job text, tablenumber int, notes text)""")
+                                bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text)""")
             self.conn.commit()
             self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
 
@@ -144,7 +144,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.search.pack(anchor="w", fill=Tk.X, pady=2)
 
         self.search.bind("<Return>", self.search_db)
-        #=================================================================================================
+        #===========================Creating Tab Control======================================================================
         
         self.tabControl = ttk.Notebook(self.main_frame)          # Create Tab Control
         self.tabControl.pack(expand=1, fill=Tk.BOTH)  # Pack to make visible
@@ -156,30 +156,30 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.style.configure("TNotebook", background="black")
         self.style.configure("TNotebook.Tab", tabcolor="white", background="black")
         
-        
+        #=============================First Tab====================================================================
         self.all_people_tab = ttk.Frame(self.tabControl) 
         self.tabControl.add(self.all_people_tab, text='All')
         self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
-        
-        # Adding Frames for the Columns for organization
         self.all_people_columns = ttk.Frame(self.all_people_tab)
         
-        # create the tree and scrollbars
-             
         self.all_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
-             
         self.create_columns(self.people_dataCols, self.all_people_columns, self.all_people)      # Add the tab
         
-        #===========================Creating Tab Control======================================================================
-        
+        #=============================Second Tab====================================================================
         self.family_tab = ttk.Frame(self.tabControl)            # Create a tab 
         self.tabControl.add(self.family_tab, text='Family')      # Add the tab
-        
         self.family_columns = ttk.Frame(self.family_tab)
 
         self.family_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
-
         self.create_columns(self.people_dataCols, self.family_columns, self.family_people)
+
+        #=============================Third Tab====================================================================
+        self.jobs_tab = ttk.Frame(self.tabControl)            # Create a tab 
+        self.tabControl.add(self.jobs_tab, text='Jobs')      # Add the tab
+        self.jobs_columns = ttk.Frame(self.jobs_tab)
+
+        self.jobs_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
+        self.create_columns(self.people_dataCols, self.jobs_columns, self.jobs_people)
         #========================Creating Methods=========================================================================
     
     def create_columns(self, dataCols, columns, tree):
@@ -210,11 +210,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # Clear the tree
         self.all_people.delete(*self.all_people.get_children())
         try:
-            self.family_people.delete(*self.family_people.get_children())
+           self.family_people.delete(*self.family_people.get_children())
+        except:
+            pass
+        try:
+           self.jobs_people.delete(*self.jobs_people.get_children())
         except:
             pass
 
-        # add data to the tree 
         sql = "SELECT firstname, lastname, phone, numberofpeople, status, job, relationship, family FROM people"
         res = self.cursor.execute(sql)
         self.conn.commit()
@@ -228,15 +231,24 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             relationship = row[6]
             family = row[7]
             
+            self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             
-            self.all_people.insert('', 'end', tags = [status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             
             try: 
                 if family != "None":
-                    self.family_people.insert('', 'end', tags = [status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                    self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+            except:
+                pass
+            try: 
+                if job != "None":
+                    self.jobs_people.insert('', 'end', tags=[job], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             except:
                 pass
 
+                
+
+            
+            
     def sort_data(self, tree, col, descending=False):
         # grab values to sort as a list of tuples (column value, column id)
         # e.g. [('Person1', 'I001'), ('Person2', 'I002'), ('Person3', 'I003')]
@@ -298,9 +310,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relation = Tk.StringVar(self.middle_frame)
         self.relationship_label = Tk.Label(self.middle_frame, text="Relation:", foreground="white", background="gray12")
         self.relationship_label.grid(row=4, column=0, sticky="w")
-        self.relationship_listbox = Tk.OptionMenu(self.middle_frame, self.relation, "Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
+        self.relationship_listbox = Tk.OptionMenu(self.middle_frame, self.relation, "Our Friend", "His Friend", "Her Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle")
         self.relationship_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
-        self.relation.set("Friend")
+        self.relation.set("Our Friend")
         self.relationship_listbox.grid(row=4, column=1, sticky="w")
 
         self.family = Tk.StringVar(self.middle_frame)
@@ -310,6 +322,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.family.set("None")
         self.family_listbox.grid(row=5, column=1, sticky="w")
+
+        self.is_bibleschool = Tk.IntVar()
+        self.is_bibleschool_label = Tk.Label(self.middle_frame, text="Bibleschool:", highlightbackground="black", foreground="white", background="gray12")
+        self.is_bibleschool_label.grid(row=6, column=0, sticky="w")
+        self.is_bibleschool_check = Tk.Checkbutton(self.middle_frame, background="gray12", variable=self.is_bibleschool)
+        self.is_bibleschool_check.grid(row=6, column=1, sticky="w")
 
         self.n_coming = Tk.StringVar(self.middle_frame)
         self.n_coming_label = Tk.Label(self.middle_frame, text="Num Coming:", foreground="white", background="gray12")
@@ -352,7 +370,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.sbutton = Tk.Button(self.toolbar1, text="Save", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25", command=self.save_person_db)
         self.sbutton.pack(side="left")
 
-    def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, numofpep, status, job, table, notes):
+    def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, bibleschool, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
         self.update_window_title(firstname, lastname)
         self.view_person.geometry("500x500")
@@ -413,6 +431,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family.set("None")
         self.family_listbox.grid(row=5, column=1, sticky="w")
 
+        self.is_bibleschool = Tk.IntVar()
+        self.is_bibleschool_label = Tk.Label(self.middle_frame, text="Bibleschool:", highlightbackground="black", foreground="white", background="gray12")
+        self.is_bibleschool_label.grid(row=6, column=0, sticky="w")
+        self.is_bibleschool_check = Tk.Checkbutton(self.middle_frame, background="gray12", variable=self.is_bibleschool)
+        self.is_bibleschool_check.grid(row=6, column=1, sticky="w")
+
         self.n_coming = Tk.StringVar(self.middle_frame)
         self.n_coming_label = Tk.Label(self.middle_frame, text="Num Coming:", foreground="white", background="gray12")
         self.n_coming_label.grid(row=4, column=1, sticky="e")
@@ -456,6 +480,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.phone_ent.insert(0, phone)
         self.relation.set(relationship)
         self.family.set(family)
+        self.is_bibleschool.set(bibleschool)
         self.n_coming.set(numofpep)
         self.status.set(status)
         self.job.set(job)
@@ -487,14 +512,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 view_phone = info[4]
                 view_relation = info[5]
                 view_fam = info[6]
-                view_numofpep = info[7]
-                view_stat = info[8]
-                view_job = info[9]
-                view_table = info[10]
-                view_notes = info[11]
+                view_bibleschool = info[7]
+                view_numofpep = info[8]
+                view_stat = info[9]
+                view_job = info[10]
+                view_table = info[11]
+                view_notes = info[12]
                 
                 self.update_view_person_window(info[1], info[2], info[3], info[4], info[5], \
-                                        info[6], info[7], info[8], info[9], info[10], info[11])
+                                        info[6], info[7], info[8], info[9], info[10], info[11], info[12])
         except:
             pass
 
@@ -505,19 +531,18 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         var_phone = self.phone_ent.get()
         var_relationship = self.relation.get() # Get relationship
         var_fam = self.family.get() # Get Family
+        var_bibleschool = self.is_bibleschool.get() # Get if they went to Bibleschool with them
         var_numofpep = self.n_coming.get() # Get number Coming
         var_status = self.status.get() # Get Status
         var_job = self.job.get() # Get Job
         var_tablenum = self.table.get()
         var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
-        sql = "INSERT INTO people (firstname, lastname, address, phone, relationship, family, numberofpeople, status, job, tablenumber, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
-        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes))
+        sql = "INSERT INTO people (firstname, lastname, address, phone, relationship, family, bibleschool, numberofpeople, status, job, tablenumber, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_bibleschool, var_numofpep, var_status, var_job, var_tablenum, var_notes))
         self.conn.commit()
         
         # Update Tree
-        self.family_people.delete(*self.family_people.get_children())
-        self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
         
         
@@ -547,14 +572,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         var_phone = self.phone_ent.get()
         var_relationship = self.relation.get() # Get relationship
         var_fam = self.family.get() # Get Family
+        var_bibleschool = self.is_bibleschool.get() # Get if they went to Bibleschool with them
         var_numofpep = self.n_coming.get() # Get number Coming
         var_status = self.status.get() # Get Status
         var_job = self.job.get() # Get Job
         var_tablenum = self.table.get()
         var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
-        sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_numofpep, var_status, var_job, var_tablenum, var_notes, self.rowid[0]))
+        sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_bibleschool, var_numofpep, var_status, var_job, var_tablenum, var_notes, self.rowid[0]))
         self.conn.commit()
         
         self.family_people.delete(*self.family_people.get_children())
@@ -570,6 +596,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for tablerow in res.fetchall():
             table = tablerow
             print table
+
     def add_person(self):
         self.add_person_window()
 
