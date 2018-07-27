@@ -33,6 +33,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE relations(hisdadside text, herdadside text, hismomside text, hermomside text)""")
             self.cursor.execute("""CREATE TABLE people(ID integer PRIMARY KEY AUTOINCREMENT, firstname text, lastname text, address text, relationship text, family text,\
                                 numberofpeople int, status text, job text, tablenumber int, notes text)""")
+            self.conn.commit()
             self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
 
             self.message_window = Tk.Toplevel(self)
@@ -101,11 +102,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         #==========================Define our Application================================================
         
-        self.toolbar = Tk.Frame(master, bd=1, relief=Tk.RAISED)
+        self.toolbar = Tk.Frame(master, bd=1, background="gray25", relief=Tk.RAISED)
         self.toolbar.pack(anchor="n", fill=Tk.X)
         
         self.add_person_image = Tk.PhotoImage(file='add_person.gif')
-        self.button = ttk.Button(self.toolbar, image=self.add_person_image, text="Add Person", compound=Tk.TOP, command=self.add_person)
+        self.button = Tk.Button(self.toolbar, image=self.add_person_image, highlightbackground="gray25", command=self.add_person)
         self.button.pack(side="left",)
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
@@ -113,28 +114,28 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         #========================Main Frame=========================================================================
        
-        self.main_frame = Tk.Frame(master, borderwidth=2, relief=Tk.SUNKEN)
-        self.main_frame.pack(expand=1, fill=Tk.BOTH, padx=5, pady=5)
+        self.main_frame = Tk.Frame(master, background="gray12")
+        self.main_frame.pack(expand=1, fill=Tk.BOTH)
 
-        self.bottom_frame = Tk.Frame(master, height=25)
+        self.bottom_frame = Tk.Frame(master, height=25, background="gray25")
         self.bottom_frame.pack(side="bottom", fill=Tk.X)
         
         ### Fill bottom_frame ###
-        self.total_cost_price_label = Tk.Label(self.bottom_frame, text="${:.2f}".format(self.total_cost), font=("Arial", 10,"bold"))
+        self.total_cost_price_label = Tk.Label(self.bottom_frame, text="${:.2f}".format(self.total_cost), foreground="white", background="gray25", font=("Arial", 10,"bold"))
         self.total_cost_price_label.pack(side="right")
-        self.total_cost_label = Tk.Label(self.bottom_frame, text="Total Cost:", font=("Arial", 10,"bold"))
+        self.total_cost_label = Tk.Label(self.bottom_frame, text="Total Cost:", foreground="white", background="gray25", font=("Arial", 10,"bold"))
         self.total_cost_label.pack(side="right")
         
 
-        self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), font=("Arial", 10,"bold"))
+        self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), foreground="white", background="gray25", font=("Arial", 10,"bold"))
         self.budget_label.pack(side="left")
         if self.total_cost <= self.budget:
-            self.total_cost_price_label.configure(fg="darkgreen")
+            self.total_cost_price_label.configure(fg="green")
         else:
             self.total_cost_price_label.configure(fg="red")
         #=================================================================================================
         self.search_frame = Tk.Frame(self.main_frame)
-        self.search_frame.pack(anchor="n", fill=Tk.X, pady=5)
+        self.search_frame.pack(anchor="n", fill=Tk.X)
         self.search_label = Tk.Label(self.search_frame, text="Search:", font=("Arial", 11))
         self.search_label.pack(side="left")
         self.search = Tk.Entry(self.search_frame)
@@ -146,8 +147,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tabControl = ttk.Notebook(self.main_frame)          # Create Tab Control
         self.tabControl.pack(expand=1, fill=Tk.BOTH)  # Pack to make visible
         self.style = ttk.Style()
-        self.style.configure(".", font=("Times", 12), foreground="black")
-        self.style.configure("Treeview", foreground='black')
+        self.style.configure(".", font=("Times", 12), foreground="gray12")
+        self.style.configure("Treeview", foreground='gray12')
         self.style.configure("TButton", font=("Ariel", 8, 'bold', 'italic'), relief="sunken")
         
         self.all_people_tab = ttk.Frame(self.tabControl) 
@@ -208,6 +209,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # add data to the tree 
         sql = "SELECT firstname, lastname, status, relationship, family FROM people"
         res = self.cursor.execute(sql)
+        self.conn.commit()
         for row in res:
             firstname = row[0]
             lastname = row[1]
@@ -223,85 +225,104 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 pass
                 
     def add_person_window(self):
-        self.person_window = Tk.Toplevel(self)
+        self.person_window = Tk.Toplevel(self, background="gray12")
         self.person_window.wm_title("Add Person")
         self.person_window.geometry("450x400")
         
         self.sql_fam = "SELECT * FROM relations"
         self.res_fam = self.cursor.execute(self.sql_fam)
+        self.conn.commit()
         for self.row in self.res_fam:
             self.his_dad_fam = self.row[0]
             self.her_dad_fam = self.row[1]
             self.his_mom_fam = self.row[2]
             self.her_mom_fam = self.row[3]
             
-        self.toolbar1 = Tk.Frame(self.person_window, bd=1, relief=Tk.RAISED)
+        self.toolbar1 = Tk.Frame(self.person_window, bd=1, relief=Tk.RAISED, background="gray25")
         
         self.toolbar1.pack(side="top", fill=Tk.X)
-        self.n_label = Tk.Label(self.person_window, text="First:")
-        self.n_label.place(x=0, y=50)
-        self.n_ent = Tk.Entry(self.person_window, width=30)
-        self.n_ent.place(x=50, y=50)
         
-        self.ln_label = Tk.Label(self.person_window, text="Last:")
-        self.ln_label.place(x=0, y=75)
-        self.ln_ent = Tk.Entry(self.person_window, width=30)
-        self.ln_ent.place(x=50, y=75)
+        self.middle_frame = Tk.Frame(self.person_window, background="gray12")
+        self.middle_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        self.bottom_frame = Tk.Frame(self.person_window, background="gray12")
+        self.bottom_frame.pack(expand=1, fill=Tk.BOTH)
 
-        self.address_label = Tk.Label(self.person_window, text="Address:")
-        self.address_label.place(x=0, y=100)
-        self.address_text = Tk.Text(self.person_window, height=3, width=30)
-        self.address_text.place(x=50, y=100)
+        self.n_label = Tk.Label(self.middle_frame, text="First:", foreground="white", background="gray12")
+        self.n_label.grid(row=0, column=0, sticky="w")
+        self.n_ent = Tk.Entry(self.middle_frame, highlightbackground="gray12", width=20)
+        self.n_ent.grid(row=0, column=1, sticky="w")
+        
+        self.ln_label = Tk.Label(self.middle_frame, text="Last:", foreground="white", background="gray12")
+        self.ln_label.grid(row=1, column=0, sticky="w")
+        self.ln_ent = Tk.Entry(self.middle_frame, highlightbackground="gray12", width=20)
+        self.ln_ent.grid(row=1, column=1, sticky="w")
 
-        self.relation = Tk.StringVar(self.person_window)
-        self.relationship_label = Tk.Label(self.person_window, text="Relation:")
-        self.relationship_label.place(x=0, y=155)
-        self.relationship_listbox = Tk.OptionMenu(self.person_window, self.relation, "Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
+        self.address_label = Tk.Label(self.middle_frame, text="Address:", foreground="white", background="gray12")
+        self.address_label.grid(row=2, column=0, sticky="nw")
+        self.address_text = Tk.Text(self.middle_frame, highlightbackground="gray12", height=3, width=30)
+        self.address_text.grid(row=2, column=1, sticky="w")
+
+        self.phone_label = Tk.Label(self.middle_frame, text="Phone:", foreground="white", background="gray12")
+        self.phone_label.grid(row=3, column=0, sticky="w")
+        self.phone_ent = Tk.Entry(self.middle_frame, highlightbackground="gray12", width=20)
+        self.phone_ent.grid(row=3, column=1, sticky="w")
+        
+        self.relation = Tk.StringVar(self.middle_frame)
+        self.relationship_label = Tk.Label(self.middle_frame, text="Relation:", foreground="white", background="gray12")
+        self.relationship_label.grid(row=4, column=0, sticky="w")
+        self.relationship_listbox = Tk.OptionMenu(self.middle_frame, self.relation, "Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
+        self.relationship_listbox.configure(background="gray12", width=12)
         self.relation.set("Friend")
-        self.relationship_listbox.place(x=50, y=155)
+        self.relationship_listbox.grid(row=4, column=1, sticky="w")
 
-        self.family = Tk.StringVar(self.person_window)
-        self.family_label = Tk.Label(self.person_window, text="Family:")
-        self.family_label.place(x=150, y=155)
-        self.family_listbox = Tk.OptionMenu(self.person_window, self.family, "None", self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam)
-        self.family.set("None")
-        self.family_listbox.place(x=195, y=155)
+        # self.family = Tk.StringVar(self.middle_frame)
+        # self.family_label = Tk.Label(self.middle_frame, text="Family:", foreground="white", background="gray12")
+        # self.family_label.grid(row=3, column=2, sticky="w")
+        # self.family_listbox = Tk.OptionMenu(self.middle_frame, self.family, "None", self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam)
+        # self.family_listbox.configure(background="gray12")
+        # self.family.set("None")
+        # self.family_listbox.grid(row=3, column=4, sticky="w")
 
-        self.n_coming = Tk.StringVar(self.person_window)
-        self.n_coming_label = Tk.Label(self.person_window, text="Number Coming:")
-        self.n_coming_label.place(x=150, y=185)
-        self.n_coming_listbox = Tk.OptionMenu(self.person_window, self.n_coming, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-        self.n_coming.set(1)
-        self.n_coming_listbox.place(x=250, y=185)
+        # self.n_coming = Tk.StringVar(self.middle_frame)
+        # self.n_coming_label = Tk.Label(self.middle_frame, text="Number Coming:", foreground="white", background="gray12")
+        # self.n_coming_label.grid(row=4, column=0, sticky="w")
+        # self.n_coming_listbox = Tk.OptionMenu(self.middle_frame, self.n_coming, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+        # self.n_coming_listbox.configure(background="gray12")
+        # self.n_coming.set(1)
+        # self.n_coming_listbox.grid(row=4, column=1, sticky="w")
         
-        self.job = Tk.StringVar(self.person_window)
-        self.jobs_label = Tk.Label(self.person_window, text="Job:")
-        self.jobs_label.place(x=300, y=50)
-        self.jobs_box = Tk.OptionMenu(self.person_window, self.job, *self.jobs)
-        self.job.set(self.jobs[0])
-        self.jobs_box.place(x=325, y=50)
+        # self.job = Tk.StringVar(self.middle_frame)
+        # self.jobs_label = Tk.Label(self.middle_frame, text="Job:", foreground="white", background="gray12")
+        # self.jobs_label.grid(row=4, column=2, sticky="w")
+        # self.jobs_box = Tk.OptionMenu(self.middle_frame, self.job, *self.jobs)
+        # self.jobs_box.configure(background="gray12")
+        # self.job.set(self.jobs[0])
+        # self.jobs_box.grid(row=4, column=4, sticky="w")
 
-        self.table = Tk.StringVar(self.person_window)
-        self.tablenum_label = Tk.Label(self.person_window, text="Table:")
-        self.tablenum_label.place(x=300, y=80)
-        self.tablenum_box = Tk.OptionMenu(self.person_window, self.table, 1, 2)
-        self.table.set(100)
-        self.tablenum_box.place(x=335, y=80)
+        # self.table = Tk.StringVar(self.middle_frame)
+        # self.tablenum_label = Tk.Label(self.middle_frame, text="Table:", foreground="white", background="gray12")
+        # self.tablenum_label.grid(row=5, column=0)
+        # self.tablenum_box = Tk.OptionMenu(self.middle_frame, self.table, 1, 2)
+        # self.tablenum_box.configure(background="gray12")
+        # self.table.set(100)
+        # self.tablenum_box.grid(row=5, column=1, sticky="w")
         
-        self.status = Tk.StringVar(self.person_window)
-        self.status_label = Tk.Label(self.person_window, text="Status:")
-        self.status_label.place(x=0, y=185)
-        self.status_listbox = Tk.OptionMenu(self.person_window, self.status, "Invited", "Might Invite", "Coming", "Not Coming")
-        self.status.set("Invited")
-        self.status_listbox.place(x=50, y=185)
+        # self.status = Tk.StringVar(self.middle_frame)
+        # self.status_label = Tk.Label(self.middle_frame, text="Status:", foreground="white", background="gray12")
+        # self.status_label.grid(row=5, column=2)
+        # self.status_listbox = Tk.OptionMenu(self.middle_frame, self.status, "Invited", "Might Invite", "Coming", "Not Coming")
+        # self.status_listbox.configure(background="gray12")
+        # self.status.set("Invited")
+        # self.status_listbox.grid(row=5, column=3, sticky="w")
 
-        self.people_nlabel = Tk.Label(self.person_window, text="Notes:")
-        self.people_nlabel.place(x=0, y=215)
-        self.people_ntext = Tk.Text(self.person_window, height=10)
-        self.people_ntext.pack(side="bottom", fill=Tk.X)
+        self.people_nlabel = Tk.Label(self.bottom_frame, text="Notes:", foreground="white", background="gray12")
+        self.people_nlabel.pack(side="top", anchor="w")
+        self.people_ntext = Tk.Text(self.bottom_frame, height=10)
+        self.people_ntext.pack(expand=1, fill=Tk.BOTH)
 
         self.save_image = Tk.PhotoImage(file="save.gif")
-        self.sbutton = ttk.Button(self.toolbar1, text="Save", width=7, image=self.save_image, compound=Tk.TOP, command=self.save_person_db)
+        self.sbutton = Tk.Button(self.toolbar1, text="Save", highlightbackground="gray25", command=self.save_person_db)
         self.sbutton.pack(side="left")
 
     def update_view_person_window(self, firstname, lastname, address, relationship, family, numofpep, status, job, table, notes):
@@ -312,6 +333,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         self.sql_fam = "SELECT * FROM relations"
         self.res_fam = self.cursor.execute(self.sql_fam)
+        self.conn.commit()
         for self.row in self.res_fam:
             self.his_dad_fam = self.row[0]
             self.her_dad_fam = self.row[1]
@@ -394,8 +416,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.table.set(table)
         self.people_ntext.insert(Tk.CURRENT, notes)
 
-        self.update_person_image = Tk.PhotoImage(file="update_person.gif")
-        self.u_person_but = ttk.Button(self.toolbar1, text="Update", image=self.update_person_image, compound=Tk.TOP, width=7, command=self.update_person_db)
+        #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
+        self.u_person_but = Tk.Button(self.toolbar1, text="Update", highlightbackground="gray25",  command=self.update_person_db)
         self.u_person_but.pack(side="left")
     
     def OnDoubleClick(self, event, tree):
@@ -403,10 +425,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         selection1 = tree.item(tree.selection())['values'][1]
         sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
         self.id = self.cursor.execute(sql, (selection, selection1))
+        self.conn.commit()
         sql = "SELECT * FROM people WHERE ID=(?)"
         for row in self.id:
              self.rowid = row
         view = self.cursor.execute(sql, (self.rowid))
+        self.conn.commit()
         
         for info in view:
             view_first = info[1]
@@ -457,6 +481,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         sql = "INSERT INTO couple(hisname, hername) VALUES (?,?)"
         self.ins_cup = self.cursor.execute(sql, (self.his_name, self.her_name,))
+        self.conn.commit()
 
         sql2 = "INSERT INTO relations(hisdadside, herdadside, hismomside, hermomside) VALUES (?,?,?,?)"
         self.ins_fam2 = self.cursor.execute(sql2, (self.his_dadside_fam, self.her_dadside_fam, self.his_momside_fam, self.her_momside_fam))
@@ -487,6 +512,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         results = self.search.get()
         sql = "Select * FROM sqlite_master WHERE type='table'"
         res = self.cursor.execute(sql)
+        self.conn.commit()
         for tablerow in res.fetchall():
             table = tablerow
             print table
