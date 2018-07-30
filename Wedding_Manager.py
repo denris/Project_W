@@ -3,7 +3,6 @@ import tkMessageBox
 import ttk
 import sqlite3
 
-
 class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     double_click_flag = False
@@ -15,90 +14,90 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         Tk.PhotoImage.__init__(self)
         self.master = master
         
-        master.geometry("1400x800")                           # Create instance      
-        master.title("Wedding Central")
-        master.configure(background="gray")                 # Add a title 
+        master.geometry("1400x800")    
+        master.title("Wedding Central") # Add a title
+        master.configure(background="gray") 
         
         #=================================================================================================
-        # Establish Database Connection
-        self.conn = sqlite3.connect("W_management.db") # or use :memory: to put it in RAM
+        
+        self.conn = sqlite3.connect("W_management.db") # Establish Database Connection
         self.cursor = self.conn.cursor()
-        self.jobs = ["None", "Photographer", "Server", "Sermon", "Git Receiver"]
+        self.jobs = ["None", "Photographer", "Server", "Sermon", "Gift Receiver"]
         self.total_cost = 0.00
         self.budget = 0.00
-        # Setting flag for sorting columns
-        self.Sorted = True
+        
+        self.Sorted = True   # Setting flag for sorting columns
 
-        # Create these tables if they don't already exist
         try:
-            self.cursor.execute("""CREATE TABLE couple(hisname text, hername text)""")
+            self.cursor.execute("""CREATE TABLE couple(hisname text, hername text)""")     # Create these tables if they don't already exist
             self.cursor.execute("""CREATE TABLE relations(hisdadside text, herdadside text, hismomside text, hermomside text)""")
             self.cursor.execute("""CREATE TABLE people(ID integer PRIMARY KEY AUTOINCREMENT, firstname text, lastname text, address text, phone text, relationship text, family text,\
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text)""")
             self.conn.commit()
             self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
 
-            self.message_window = Tk.Toplevel(self)
+            self.message_window = Tk.Toplevel(self, takefocus=True)
             self.message_window.wm_title("Enter Names & Families")
-            self.message_window.geometry("325x185")
+            self.message_window.geometry("465x175")
             
-            ### Label for couples Names
-            self.top_label = Tk.Label(self.message_window, font=("Helvetica", 10, "bold italic"), text="Couple's Names")
-            self.top_label.place(x=0, y=3)
-            self.sep_top = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
-            self.sep_top.place(x=9, y=23, width=305)
-            self.sep_left = ttk.Separator(self.message_window, orient=Tk.VERTICAL)
-            self.sep_left.place(x=9, y=23, height=33)
-            self.sep_right = ttk.Separator(self.message_window, orient=Tk.VERTICAL)
-            self.sep_right.place(x=315, y=23, height=33)
-            self.sep_bot = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
-            self.sep_bot.place(x=9, y=55, width=305)
+            self.message_main = Tk.Frame(self.message_window)
+            self.message_main.pack(expand=1, fill=Tk.BOTH)
             
-            self.his_label = Tk.Label(self.message_window, text="His Name:")
-            self.his_label.place(x=10, y=30)
-            self.his_ent = Tk.Entry(self.message_window, width=15)
-            self.his_ent.place(x=70, y=30)
+            ### Separator Frame ###
+            self.sep_top = ttk.Separator(self.message_main, orient=Tk.HORIZONTAL) ### Top Separators
+            self.sep_top.grid(row=0, columnspan=5, padx=3, sticky="we")
+            self.sep_left = ttk.Separator(self.message_main, orient=Tk.VERTICAL)
+            self.sep_left.place(x=3, y=11, height=125)
             
-            self.her_label = Tk.Label(self.message_window, text="Her Name:")
-            self.her_label.place(x=152, y=30)
-            self.her_ent = Tk.Entry(self.message_window, width=15)
-            self.her_ent.place(x=218, y=30)
+            self.bot_sep_top = ttk.Separator(self.message_main, orient=Tk.HORIZONTAL) ### Bottom Separators
+            self.bot_sep_top.grid(row=4, columnspan=5, padx=3, sticky="we")
+            self.bot_sep_right = ttk.Separator(self.message_main, orient=Tk.VERTICAL)
+            self.bot_sep_right.place(x=461, y=11, height=125)
+            self.bot_sep_bot = ttk.Separator(self.message_main, orient=Tk.HORIZONTAL)
+            self.bot_sep_bot.grid(row=7, columnspan=5, padx=3, sticky="we")
             
-            #=======================Label for Family Names==============================================================
-            self.bot_label = Tk.Label(self.message_window, font=("Helvetica", 10, "bold italic"), text="Family Names")
-            self.bot_label.place(x=0, y=60)
-            self.bot_sep_top = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
-            self.bot_sep_top.place(x=9, y=80, width=305)
-            self.bot_sep_left = ttk.Separator(self.message_window, orient=Tk.VERTICAL)
-            self.bot_sep_left.place(x=9, y=80, height=61)
-            self.bot_sep_right = ttk.Separator(self.message_window, orient=Tk.VERTICAL)
-            self.bot_sep_right.place(x=315, y=80, height=61)
-            self.bot_sep_bot = ttk.Separator(self.message_window, orient=Tk.HORIZONTAL)
-            self.bot_sep_bot.place(x=9, y=140, width=305)
+            ### Label for couples Names ###
+            self.his_label = Tk.Label(self.message_main, text="His Name:")
+            self.his_label.grid(row=2, column=0, padx=5, sticky="e")
+            self.his_ent = Tk.Entry(self.message_main, width=15)
+            self.his_ent.grid(row=2, column=1, sticky="w")
             
-            self.his_dadside = Tk.Label(self.message_window, text="His Dad's:")
-            self.his_dadside.place(x=10, y=87)
-            self.his_dadside_ent = Tk.Entry(self.message_window, width=15)
-            self.his_dadside_ent.place(x=73, y=87)
+            self.her_label = Tk.Label(self.message_main, text="Her Name:")
+            self.her_label.grid(row=2, column=2, sticky="w")
+            self.her_ent = Tk.Entry(self.message_main, width=15)
+            self.her_ent.grid(row=2, column=3, padx=5, sticky="w")
             
-            self.her_dadside = Tk.Label(self.message_window, text="Her Dad's:")
-            self.her_dadside.place(x=152, y=87)
-            self.her_dadside_ent = Tk.Entry(self.message_window, width=15)
-            self.her_dadside_ent.place(x=218, y=87)
+            ### Separator Frame Labels ###
+            self.top_label = Tk.Label(self.message_main, font=("Helvetica", 16, "bold italic"), text="Couple's Names")
+            self.top_label.grid(row=0, column=1, stick="w")
             
-            self.his_momside = Tk.Label(self.message_window, text="His Mom's:")
-            self.his_momside.place(x=10, y=117)
-            self.his_momside_ent = Tk.Entry(self.message_window, width=15)
-            self.his_momside_ent.place(x=73, y=117)
+            self.bot_label = Tk.Label(self.message_main, font=("Helvetica", 16, "bold italic"), text="Family Names")
+            self.bot_label.grid(row=4, column=1, sticky="w")
 
-            self.her_momside = Tk.Label(self.message_window, text="Her Mom's:")
-            self.her_momside.place(x=152, y=117)
-            self.her_momside_ent = Tk.Entry(self.message_window, width=15)
-            self.her_momside_ent.place(x=218, y=117)
+            self.his_dadside = Tk.Label(self.message_main, text="His Dad's:")
+            self.his_dadside.grid(row=5, column=0, padx=5, sticky="e")
+            self.his_dadside_ent = Tk.Entry(self.message_main, width=15)
+            self.his_dadside_ent.grid(row=5, column=1, sticky="w")
             
-            self.cupfamily_b = Tk.Button(self.message_window, text="Submit", command=self.save_cupfam_db)
-            self.cupfamily_b.place(x=265,y=150)
+            self.her_dadside = Tk.Label(self.message_main, text="Her Dad's:")
+            self.her_dadside.grid(row=5, column=2, sticky="w")
+            self.her_dadside_ent = Tk.Entry(self.message_main, width=15)
+            self.her_dadside_ent.grid(row=5, column=3, padx=5, sticky="w")
             
+            self.his_momside = Tk.Label(self.message_main, text="His Mom's:")
+            self.his_momside.grid(row=6, column=0, sticky="e")
+            self.his_momside_ent = Tk.Entry(self.message_main, width=15)
+            self.his_momside_ent.grid(row=6, column=1, sticky="w")
+
+            self.her_momside = Tk.Label(self.message_main, text="Her Mom's:")
+            self.her_momside.grid(row=6, column=2, sticky="w")
+            self.her_momside_ent = Tk.Entry(self.message_main, width=15)
+            self.her_momside_ent.grid(row=6, column=3, padx=5, sticky="w")
+            
+            self.cupfamily_b = Tk.Button(self.message_main, text="Submit", command=self.save_cupfam_db)
+            self.cupfamily_b.grid(row=8, column=3, sticky="e")
+            self.message_window.attributes('-topmost', 'true')  # Bring the message window on top
+        
         except:
             pass
         
@@ -119,23 +118,24 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.main_frame = Tk.Frame(master, background="black")
         self.main_frame.pack(expand=1, fill=Tk.BOTH)
 
-        self.bottom_frame = Tk.Frame(master, height=25, background="gray25")
+        self.bottom_frame = Tk.Frame(master, background="gray25") ### Frame for Budget/Cost
         self.bottom_frame.pack(side="bottom", fill=Tk.X)
         
         ### Fill bottom_frame ###
-        self.total_cost_price_label = Tk.Label(self.bottom_frame, text="${:.2f}".format(self.total_cost), foreground="white", background="gray25", font=("Arial", 10,"bold"))
+        self.total_cost_price_label = Tk.Label(self.bottom_frame, text="${:.2f}".format(self.total_cost), foreground="white", background="gray25", font=("Arial", 16,"bold"))
         self.total_cost_price_label.pack(side="right")
-        self.total_cost_label = Tk.Label(self.bottom_frame, text="Total Cost:", foreground="white", background="gray25", font=("Arial", 10,"bold"))
+        self.total_cost_label = Tk.Label(self.bottom_frame, text="Total Cost:", foreground="white", background="gray25", font=("Arial", 14,"bold"))
         self.total_cost_label.pack(side="right")
         
-
-        self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), foreground="white", background="gray25", font=("Arial", 10,"bold"))
+        self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), foreground="white", background="gray25", font=("Arial", 16,"bold"))
         self.budget_label.pack(side="left")
+        
         if self.total_cost <= self.budget:
             self.total_cost_price_label.configure(fg="green")
         else:
             self.total_cost_price_label.configure(fg="red")
         #=================================================================================================
+        
         self.search_frame = Tk.Frame(self.main_frame, background="black")
         self.search_frame.pack(anchor="n", fill=Tk.X, pady=5)
         self.search_label = Tk.Label(self.search_frame, text="Search:", font=("Arial", 11), background="black", foreground="white")
@@ -151,10 +151,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.style.configure(".", font=("Times", 12), size=2, foreground="white", background="gray25")
-        self.style.configure("Treeview", foreground='white', fieldbackground="black", background="black")
+        self.style.configure("Treeview", font=("Ariel", 14), foreground='white', fieldbackground="black", background="black")
         self.style.configure("TButton", font=("Ariel", 8, 'bold', 'italic'), relief="sunken")
-        self.style.configure("TNotebook", background="black")
-        self.style.configure("TNotebook.Tab", tabcolor="white", background="black")
         
         #=============================First Tab====================================================================
         self.all_people_tab = ttk.Frame(self.tabControl) 
@@ -254,10 +252,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # e.g. [('Person1', 'I001'), ('Person2', 'I002'), ('Person3', 'I003')]
         data = [[tree.set(child, col), child] for child in tree.get_children('')]
         
-        # reorder data
-        # tkinter looks after moving other items in the same row
-        data.sort(reverse=descending)
-        for indx, item in enumerate(data):
+        data.sort(reverse=descending)  # reorder data
+        for indx, item in enumerate(data): # tkinter looks after moving other items in the same row
             tree.move(item[1], '', indx)   # item[1] = item Identifier
         
         # reverse sort direction for next sort operation
