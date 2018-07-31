@@ -16,7 +16,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         master.geometry("1400x800")    
         master.title("Wedding Central") # Add a title
-        master.configure(background="gray") 
+        master.configure(background="gray")
+        master.attributes('-topmost', 'true')
         
         #=================================================================================================
         
@@ -29,12 +30,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.Sorted = True   # Setting flag for sorting columns
 
         try:
-            self.cursor.execute("""CREATE TABLE couple(hisname text, hername text)""")     # Create these tables if they don't already exist
+            self.cursor.execute("""CREATE TABLE couple(hisname text, hername text)""")  # Create these tables if they don't already exist
             self.cursor.execute("""CREATE TABLE relations(hisdadside text, herdadside text, hismomside text, hermomside text)""")
             self.cursor.execute("""CREATE TABLE people(ID integer PRIMARY KEY AUTOINCREMENT, firstname text, lastname text, address text, phone text, relationship text, family text,\
-                                bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text)""")
+                                bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
             self.conn.commit()
-            self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
+            #self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
 
             self.message_window = Tk.Toplevel(self, takefocus=True)
             self.message_window.wm_title("Enter Names & Families")
@@ -585,13 +586,25 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.update_window_title(var_n, var_ln)
 
     def search_db(self, event):
+        try:
+            self.cursor.execute("""CREATE VIRTUAL TABLE weddingsearch USING fts4(ID, firstname, lastname, address, phone, relationship, family, bibleschool, \
+                                numberofpeople, status, job, tablenumber, notes)""")
+            self.conn.commit()
+        except:
+            pass
         results = self.search.get()
-        sql = "Select * FROM sqlite_master WHERE type='table'"
+        sql = "INSERT INTO weddingsearch SELECT * FROM people"
         res = self.cursor.execute(sql)
         self.conn.commit()
-        for tablerow in res.fetchall():
-            table = tablerow
-            print table
+        sql = "SELECT * FROM weddingsearch WHERE firstname OR lastname OR address OR phone OR relationship OR family OR bibleschool OR \
+                                numberofpeople OR status OR job OR tablenumber OR notes LIKE ?"
+        res = self.cursor.execute(sql, (results,))
+        self.conn.commit()
+        for row in res:
+            print row
+        sql = "DROP TABLE weddingsearch"
+        self.cursor.execute(sql)
+        self.conn.commit()
 
     def add_person(self):
         self.add_person_window()
