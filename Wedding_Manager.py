@@ -17,7 +17,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         master.geometry("1400x800")    
         master.title("Wedding Central") # Add a title
         master.configure(background="gray")
-        master.attributes('-topmost', 'true')
+        #master.attributes('-topmost', 'true')
         
         #=================================================================================================
         
@@ -371,7 +371,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.view_person = Tk.Toplevel(self, takefocus=True)
         self.update_window_title(firstname, lastname)
         self.view_person.geometry("500x500")
-        
+        self.view_person.attributes('-topmost', 'true')
         
         self.sql_fam = "SELECT * FROM relations"
         self.res_fam = self.cursor.execute(self.sql_fam)
@@ -592,12 +592,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.conn.commit()
         except:
             pass
+        
         results = self.search.get()
         sql = "INSERT INTO weddingsearch SELECT * FROM people"
         res = self.cursor.execute(sql)
         self.conn.commit()
-        sql = "SELECT * FROM weddingsearch WHERE firstname OR lastname OR address OR phone OR relationship OR family OR bibleschool OR \
-                                numberofpeople OR status OR job OR tablenumber OR notes LIKE ?"
+        sql = "SELECT * FROM weddingsearch WHERE firstname AND lastname LIKE ('%' || ? || '%')"
         res = self.cursor.execute(sql, (results,))
         self.conn.commit()
         for row in res:
