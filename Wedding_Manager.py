@@ -597,14 +597,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         sql = "INSERT INTO weddingsearch SELECT * FROM people"
         res = self.cursor.execute(sql)
         self.conn.commit()
-        sql = "SELECT * FROM weddingsearch WHERE firstname LIKE ('%' || ? || '%') OR lastname LIKE ('%' || ? || '%')"
+        
+        sql = "SELECT * FROM weddingsearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%')"
         res = self.cursor.execute(sql, (results, results))
         self.conn.commit()
-        self.tree_window = Tk.Toplevel()
-        self.tree_window.geometry("800x800")
-        self.tree = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
-        self.tree_cols = ttk.Frame(self.tree)
-        self.create_columns(self.people_dataCols, self.tree_cols, self.tree)
+        # self.tree_window = Tk.Toplevel()
+        # self.tree_window.geometry("800x800")
+        # self.tree = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
+        # self.tree_cols = ttk.Frame(self.tree)
+        # self.create_columns(self.people_dataCols, self.tree_cols, self.tree)
         for row in res:
             print row
         sql = "DROP TABLE weddingsearch"
