@@ -665,7 +665,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.search_tree.bind("<Double-1>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))
             self.search_tree.bind("<Return>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))
         else:
-            self.update_window_title(self.search_window, "Search Results For ", sear_win_results)
+            self.update_window_title(self.search_window, "Search Results For:", sear_win_results)
             self.search_tree.delete(*self.search_tree.get_children())
             res = self.cursor.execute(sql, (sear_win_results, sear_win_results))
             self.conn.commit()
@@ -678,10 +678,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
 
         
-               
-        
-        
-
     def add_person(self):
         self.add_person_window()
 
