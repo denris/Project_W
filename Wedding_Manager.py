@@ -603,7 +603,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             pass
         
         results = self.search.get()
-        sear_win_results = self.sear_win_sear.get()
+        try:
+            sear_win_results = self.sear_win_sear.get()
+        except:
+            pass
+
         sql = "INSERT INTO weddingsearch SELECT * FROM people"
         res = self.cursor.execute(sql)
         self.conn.commit()
@@ -611,58 +615,70 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         sql = "SELECT * FROM weddingsearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%')"
         if search == self.search:
             res = self.cursor.execute(sql, (results, results))
+            self.conn.commit()
+            
+            ### Making the Search Window Appear ###
+            self.search_window = Tk.Toplevel(self, background="black")
+            self.search_window.geometry("800x480")
+            self.search_window.wm_title(" " + "Search Results For: " + results)
+            
+            #=============================Search Tree====================================================================
+            self.search_win_frame = Tk.Frame(self.search_window, background="black")
+            self.search_win_frame.pack(anchor="n", fill=Tk.X, pady=5)
+            
+            self.sear_win_sear_label = Tk.Label(self.search_win_frame, text="Search:", font=("Arial", 11), foreground="white", background="black", pady=2)
+            self.sear_win_sear_label.pack(side="left")
+            self.sear_win_sear = Tk.Entry(self.search_win_frame)
+            self.sear_win_sear.pack(anchor="w", fill=Tk.X, pady=2)
+            self.sear_win_sear.bind("<Return>", lambda event, arg=self.sear_win_sear: self.search_db(event, arg))
+            
+            self.tree_cols = ttk.Frame(self.search_window)
+            self.search_tree = ttk.Treeview(self.tree_cols, columns=self.people_dataCols, show= 'headings')
+                
+            self.tree_cols.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+            ysb = ttk.Scrollbar(self.tree_cols, orient=Tk.VERTICAL, command= self.search_tree.yview)
+            xsb = ttk.Scrollbar(self.tree_cols, orient=Tk.HORIZONTAL, command= self.search_tree.xview)
+            self.search_tree['yscroll'] = ysb.set
+            self.search_tree['xscroll'] = xsb.set
+            self.search_tree.tag_configure("Invited", foreground='purple', background='black')
+            self.search_tree.tag_configure("Coming", foreground='darkgreen', background='black')
+            # add tree and scrollbars to frame
+            self.search_tree.grid(in_=self.tree_cols, row=0, column=0, sticky=Tk.NSEW)
+            ysb.grid(in_=self.tree_cols, row=0, column=1, sticky=Tk.NS)
+            xsb.grid(in_=self.tree_cols, row=1, column=0, sticky=Tk.EW)
+            
+            # set frame resize priorities
+            self.tree_cols.rowconfigure(0, weight=1)
+            self.tree_cols.columnconfigure(0, weight=1)
+            
+            for n in self.people_dataCols:
+                self.search_tree.heading(n, text=n.title(), command=lambda n=n: self.sort_data(self.search_tree, n, self.Sorted))
+                self.search_tree.column(n, minwidth=0, width=100)
+            self.search_tree.delete(*self.search_tree.get_children())
+            for row in res:
+                self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
+            
+            sql = "DROP TABLE weddingsearch"
+            self.cursor.execute(sql)
+            self.conn.commit()
+            
+            self.search_tree.bind("<Double-1>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))
+            self.search_tree.bind("<Return>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))
         else:
+            self.update_window_title(self.search_window, "Search Results For ", sear_win_results)
             self.search_tree.delete(*self.search_tree.get_children())
             res = self.cursor.execute(sql, (sear_win_results, sear_win_results))
-        self.conn.commit()
+            self.conn.commit()
+            for row in res:
+                self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
+            
+            sql = "DROP TABLE weddingsearch"
+            self.cursor.execute(sql)
+            self.conn.commit()
+
+
         
-        ### Making the Search Window Appear ###
-        self.search_window = Tk.Toplevel(self, background="black")
-        self.search_window.geometry("800x480")
-        self.search_window.wm_title(" " + "Search Results For: " + results)
-        #self.update_window_title(self.search_window, "Search Results For ", results)
-        #=============================Search Tree====================================================================
-        self.search_win_frame = Tk.Frame(self.search_window, background="black")
-        self.search_win_frame.pack(anchor="n", fill=Tk.X, pady=5)
-        
-        self.sear_win_sear_label = Tk.Label(self.search_win_frame, text="Search:", font=("Arial", 11), foreground="white", background="black", pady=2)
-        self.sear_win_sear_label.pack(side="left")
-        self.sear_win_sear = Tk.Entry(self.search_win_frame)
-        self.sear_win_sear.pack(anchor="w", fill=Tk.X, pady=2)
-        self.sear_win_sear.bind("<Return>", lambda event, arg=self.sear_win_sear: self.search_db(event, arg))
-        
-        self.tree_cols = ttk.Frame(self.search_window)
-        self.search_tree = ttk.Treeview(self.tree_cols, columns=self.people_dataCols, show= 'headings')
-             
-        self.tree_cols.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
-        ysb = ttk.Scrollbar(self.tree_cols, orient=Tk.VERTICAL, command= self.search_tree.yview)
-        xsb = ttk.Scrollbar(self.tree_cols, orient=Tk.HORIZONTAL, command= self.search_tree.xview)
-        self.search_tree['yscroll'] = ysb.set
-        self.search_tree['xscroll'] = xsb.set
-        self.search_tree.tag_configure("Invited", foreground='purple', background='black')
-        self.search_tree.tag_configure("Coming", foreground='darkgreen', background='black')
-        # add tree and scrollbars to frame
-        self.search_tree.grid(in_=self.tree_cols, row=0, column=0, sticky=Tk.NSEW)
-        ysb.grid(in_=self.tree_cols, row=0, column=1, sticky=Tk.NS)
-        xsb.grid(in_=self.tree_cols, row=1, column=0, sticky=Tk.EW)
-        
-        # set frame resize priorities
-        self.tree_cols.rowconfigure(0, weight=1)
-        self.tree_cols.columnconfigure(0, weight=1)
-        
-        for n in self.people_dataCols:
-            self.search_tree.heading(n, text=n.title(), command=lambda n=n: self.sort_data(self.search_tree, n, self.Sorted))
-            self.search_tree.column(n, minwidth=0, width=100)
-        
-        for row in res:
-            self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
-        
-        sql = "DROP TABLE weddingsearch"
-        self.cursor.execute(sql)
-        self.conn.commit()
-        
-        self.search_tree.bind("<Double-1>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))
-        self.search_tree.bind("<Return>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))       
+               
         
         
 
