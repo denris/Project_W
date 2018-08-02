@@ -14,7 +14,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         Tk.PhotoImage.__init__(self)
         self.master = master
         
-        master.geometry("1400x800")    
+        master.geometry("1000x600")    
         master.title("Wedding Central") # Add a title
         master.configure(background="gray")
         #master.attributes('-topmost', 'true')
@@ -102,6 +102,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         except:
             pass
         
+        ### Setting the family instance variables ###
+        self.sql_fam = "SELECT * FROM relations"
+        self.res_fam = self.cursor.execute(self.sql_fam)
+        self.conn.commit()
+        for self.row in self.res_fam:
+            self.his_dad_fam = self.row[0]
+            self.her_dad_fam = self.row[1]
+            self.his_mom_fam = self.row[2]
+            self.her_mom_fam = self.row[3]
         #==========================Define our Application================================================
         
         self.toolbar = Tk.Frame(master, bd=1, background="gray25", relief=Tk.RAISED)
@@ -144,7 +153,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.search = Tk.Entry(self.search_frame)
         self.search.pack(anchor="w", fill=Tk.X, pady=2)
 
-        self.search.bind("<Return>", self.search_db)
+        self.search.bind("<Return>", lambda event, arg=self.search: self.search_db(event, arg))
         #===========================Creating Tab Control======================================================================
         
         self.tabControl = ttk.Notebook(self.main_frame)          # Create Tab Control
@@ -179,6 +188,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.jobs_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
         self.create_columns(self.people_dataCols, self.jobs_columns, self.jobs_people)
+
         #========================Creating Methods=========================================================================
     
     def create_columns(self, dataCols, columns, tree):
@@ -187,8 +197,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         xsb = ttk.Scrollbar(orient=Tk.HORIZONTAL, command= tree.xview)
         tree['yscroll'] = ysb.set
         tree['xscroll'] = xsb.set
-        tree.tag_configure("Invited", foreground='purple')
-        tree.tag_configure("Coming", foreground='darkgreen')
+        tree.tag_configure("Invited", foreground='purple', background='black')
+        tree.tag_configure("Coming", foreground='darkgreen', background='black')
+        tree.tag_configure(self.her_dad_fam, foreground='orange', background='black')
+        tree.tag_configure(self.his_dad_fam, foreground='green', background='black')
+        tree.tag_configure(self.her_mom_fam, foreground='blue', background='black')
+        tree.tag_configure(self.his_mom_fam, foreground='purple', background='black')
         # add tree and scrollbars to frame
         tree.grid(in_=columns, row=0, column=0, sticky=Tk.NSEW)
         ysb.grid(in_=columns, row=0, column=1, sticky=Tk.NS)
@@ -200,7 +214,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         for n in dataCols:
             tree.heading(n, text=n.title(), command=lambda n=n: self.sort_data(tree, n, self.Sorted))
-        
+            tree.column(n, minwidth=0, width=100)
+
         self.load_people_data()
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
         tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
@@ -246,8 +261,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
                 
 
-            
-            
     def sort_data(self, tree, col, descending=False):
         # grab values to sort as a list of tuples (column value, column id)
         # e.g. [('Person1', 'I001'), ('Person2', 'I002'), ('Person3', 'I003')]
@@ -264,16 +277,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.person_window = Tk.Toplevel(self, background="gray12")
         self.person_window.wm_title("Add Person")
         self.person_window.geometry("500x500")
-        
-        self.sql_fam = "SELECT * FROM relations"
-        self.res_fam = self.cursor.execute(self.sql_fam)
-        self.conn.commit()
-        for self.row in self.res_fam:
-            self.his_dad_fam = self.row[0]
-            self.her_dad_fam = self.row[1]
-            self.his_mom_fam = self.row[2]
-            self.her_mom_fam = self.row[3]
-            
+                    
         self.toolbar1 = Tk.Frame(self.person_window, bd=1, relief=Tk.RAISED, background="gray25")
         
         self.toolbar1.pack(side="top", fill=Tk.X)
@@ -369,7 +373,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, bibleschool, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
-        self.update_window_title(firstname, lastname)
+        self.view_person.wm_title(" " + firstname + " " + lastname)
         self.view_person.geometry("500x500")
         self.view_person.attributes('-topmost', 'true')
         
@@ -583,9 +587,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
-        self.update_window_title(var_n, var_ln)
+        self.update_window_title(self.view_person, var_n, var_ln)
+        try:
+            self.search_tree.delete(*self.search_tree.get_children())
+            self.search_tree.insert('', 'end', tags=[var_status], values=[var_n, var_ln, var_phone, var_numofpep, var_status, var_job, var_relationship])
+        except:
+            pass
 
-    def search_db(self, event):
+    def search_db(self, event, search):
         try:
             self.cursor.execute("""CREATE VIRTUAL TABLE weddingsearch USING fts4(ID, firstname, lastname, address, phone, relationship, family, bibleschool, \
                                 numberofpeople, status, job, tablenumber, notes)""")
@@ -594,29 +603,74 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             pass
         
         results = self.search.get()
+        sear_win_results = self.sear_win_sear.get()
         sql = "INSERT INTO weddingsearch SELECT * FROM people"
         res = self.cursor.execute(sql)
         self.conn.commit()
         
         sql = "SELECT * FROM weddingsearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%')"
-        res = self.cursor.execute(sql, (results, results))
+        if search == self.search:
+            res = self.cursor.execute(sql, (results, results))
+        else:
+            self.search_tree.delete(*self.search_tree.get_children())
+            res = self.cursor.execute(sql, (sear_win_results, sear_win_results))
         self.conn.commit()
-        # self.tree_window = Tk.Toplevel()
-        # self.tree_window.geometry("800x800")
-        # self.tree = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
-        # self.tree_cols = ttk.Frame(self.tree)
-        # self.create_columns(self.people_dataCols, self.tree_cols, self.tree)
+        
+        ### Making the Search Window Appear ###
+        self.search_window = Tk.Toplevel(self, background="black")
+        self.search_window.geometry("800x480")
+        self.search_window.wm_title(" " + "Search Results For: " + results)
+        #self.update_window_title(self.search_window, "Search Results For ", results)
+        #=============================Search Tree====================================================================
+        self.search_win_frame = Tk.Frame(self.search_window, background="black")
+        self.search_win_frame.pack(anchor="n", fill=Tk.X, pady=5)
+        
+        self.sear_win_sear_label = Tk.Label(self.search_win_frame, text="Search:", font=("Arial", 11), foreground="white", background="black", pady=2)
+        self.sear_win_sear_label.pack(side="left")
+        self.sear_win_sear = Tk.Entry(self.search_win_frame)
+        self.sear_win_sear.pack(anchor="w", fill=Tk.X, pady=2)
+        self.sear_win_sear.bind("<Return>", lambda event, arg=self.sear_win_sear: self.search_db(event, arg))
+        
+        self.tree_cols = ttk.Frame(self.search_window)
+        self.search_tree = ttk.Treeview(self.tree_cols, columns=self.people_dataCols, show= 'headings')
+             
+        self.tree_cols.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+        ysb = ttk.Scrollbar(self.tree_cols, orient=Tk.VERTICAL, command= self.search_tree.yview)
+        xsb = ttk.Scrollbar(self.tree_cols, orient=Tk.HORIZONTAL, command= self.search_tree.xview)
+        self.search_tree['yscroll'] = ysb.set
+        self.search_tree['xscroll'] = xsb.set
+        self.search_tree.tag_configure("Invited", foreground='purple', background='black')
+        self.search_tree.tag_configure("Coming", foreground='darkgreen', background='black')
+        # add tree and scrollbars to frame
+        self.search_tree.grid(in_=self.tree_cols, row=0, column=0, sticky=Tk.NSEW)
+        ysb.grid(in_=self.tree_cols, row=0, column=1, sticky=Tk.NS)
+        xsb.grid(in_=self.tree_cols, row=1, column=0, sticky=Tk.EW)
+        
+        # set frame resize priorities
+        self.tree_cols.rowconfigure(0, weight=1)
+        self.tree_cols.columnconfigure(0, weight=1)
+        
+        for n in self.people_dataCols:
+            self.search_tree.heading(n, text=n.title(), command=lambda n=n: self.sort_data(self.search_tree, n, self.Sorted))
+            self.search_tree.column(n, minwidth=0, width=100)
+        
         for row in res:
-            print row
+            self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
+        
         sql = "DROP TABLE weddingsearch"
         self.cursor.execute(sql)
         self.conn.commit()
+        
+        self.search_tree.bind("<Double-1>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))
+        self.search_tree.bind("<Return>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))       
+        
+        
 
     def add_person(self):
         self.add_person_window()
 
-    def update_window_title(self, firstname, lastname):
-        self.view_person.wm_title(" " + firstname + " " + lastname)
+    def update_window_title(self, window, firstname, lastname):
+        window.wm_title(" " + firstname + " " + lastname)
         
     def destroy_window(self, window):
         window.destroy()
