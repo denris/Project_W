@@ -122,6 +122,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", padx=1, fill=Tk.BOTH)
+
+        self.add_item_button = Tk.Button(self.toolbar, text="+ Item" ,highlightbackground="gray25", command=self.add_item)
+        self.add_item_button.pack(side="left",)
         
         #========================Main Frame=========================================================================
        
@@ -371,6 +374,47 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.sbutton = Tk.Button(self.toolbar1, text="Save", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25", command=self.save_person_db)
         self.sbutton.pack(side="left")
 
+    def add_item_window(self):
+        self.item_window = Tk.Toplevel(self, takefocus=True)
+        self.item_window.wm_title("Add Item")
+        self.item_window.geometry("500x500")
+        self.item_window.attributes('-topmost', 'true')
+
+        self.item_toolbar1 = Tk.Frame(self.item_window, bd=1, relief=Tk.RAISED, background="gray25")
+        
+        self.item_toolbar1.pack(side="top", fill=Tk.X)
+        
+        self.item_middle_frame = Tk.Frame(self.item_window, background="gray12")
+        self.item_middle_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        self.item_bottom_frame = Tk.Frame(self.item_window, background="gray12")
+        self.item_bottom_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        ### Add Item name label and box
+        self.item_label = Tk.Label(self.item_middle_frame, text="Item:", foreground="white", background="gray12")
+        self.item_label.grid(row=0, column=0, sticky="w")
+        self.item_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=20)
+        self.item_ent.grid(row=0, column=1, sticky="w")
+
+        ### Item Cost
+        self.item_cost_label = Tk.Label(self.item_middle_frame, text="Cost: $", foreground="white", background="gray12")
+        self.item_cost_label.grid(row=1, column=0, sticky="w")
+        self.item_cost_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=6)
+        self.item_cost_ent.grid(row=1, column=1, sticky="w")
+
+        ### Add note box at bottom
+        self.item_nlabel = Tk.Label(self.item_bottom_frame, text="Notes:", foreground="white", background="gray12")
+        self.item_nlabel.pack(side="top", anchor="w")
+        self.item_ntext = Tk.Text(self.item_bottom_frame, height=10)
+        self.item_ntext.pack(expand=1, fill=Tk.BOTH)
+
+        
+        #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
+        self.a_item_but = Tk.Button(self.item_toolbar1, text="Add", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.save_item_db)
+        self.a_item_but.pack(side="left")
+
+
+
     def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, bibleschool, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
         self.view_person.wm_title(" " + firstname + " " + lastname)
@@ -549,6 +593,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         #self.destroy_window(self.person_window)
 
+    def save_item_db(self):
+        pass
+
     def save_cupfam_db(self):
         self.his_name = self.his_ent.get()
         self.her_name = self.her_ent.get()
@@ -680,6 +727,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
     def add_person(self):
         self.add_person_window()
+
+    def add_item(self):
+        self.add_item_window()
 
     def update_window_title(self, window, firstname, lastname):
         window.wm_title(" " + firstname + " " + lastname)
