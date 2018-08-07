@@ -34,6 +34,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE relations(hisdadside text, herdadside text, hismomside text, hermomside text)""")
             self.cursor.execute("""CREATE TABLE people(ID integer PRIMARY KEY AUTOINCREMENT, firstname text, lastname text, address text, phone text, relationship text, family text,\
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
+            self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
+                                CONSTRAINT name_unique UNIQUE (item))""")
             self.conn.commit()
             #self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
 
@@ -143,10 +145,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), foreground="white", background="gray25", font=("Arial", 16,"bold"))
         self.budget_label.pack(side="left")
         
-        if self.total_cost <= self.budget:
-            self.total_cost_price_label.configure(fg="green")
-        else:
-            self.total_cost_price_label.configure(fg="red")
+        
         #=================================================================================================
         
         self.search_frame = Tk.Frame(self.main_frame, background="black")
@@ -163,20 +162,20 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tabControl.pack(expand=1, fill=Tk.BOTH)  # Pack to make visible
         self.style = ttk.Style()
         self.style.theme_use("clam")
-        self.style.configure(".", font=("Times", 12), size=2, foreground="white", background="gray25")
-        self.style.configure("Treeview", font=("Ariel", 14), foreground='white', fieldbackground="black", background="black")
-        self.style.configure("TButton", font=("Ariel", 8, 'bold', 'italic'), relief="sunken")
+        self.style.configure(".", font=("Times", 12), background="black", foreground="black")
+        self.style.configure("Treeview", font=("Ariel", 14), background="black")
+        self.style.configure("Treeview.Heading", foreground='white', background="gray25")
         
-        #=============================First Tab====================================================================
-        self.all_people_tab = ttk.Frame(self.tabControl) 
-        self.tabControl.add(self.all_people_tab, text='All')
+        #=============================All People Tab====================================================================
         self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
+        self.all_people_tab = ttk.Frame(self.tabControl) 
+        self.tabControl.add(self.all_people_tab, text='People')
         self.all_people_columns = ttk.Frame(self.all_people_tab)
         
         self.all_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
         self.create_columns(self.people_dataCols, self.all_people_columns, self.all_people)      # Add the tab
         
-        #=============================Second Tab====================================================================
+        #=============================Family Tab====================================================================
         self.family_tab = ttk.Frame(self.tabControl)            # Create a tab 
         self.tabControl.add(self.family_tab, text='Family')      # Add the tab
         self.family_columns = ttk.Frame(self.family_tab)
@@ -184,13 +183,22 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
         self.create_columns(self.people_dataCols, self.family_columns, self.family_people)
 
-        #=============================Third Tab====================================================================
+        #=============================Jobs Tab====================================================================
         self.jobs_tab = ttk.Frame(self.tabControl)            # Create a tab 
         self.tabControl.add(self.jobs_tab, text='Jobs')      # Add the tab
         self.jobs_columns = ttk.Frame(self.jobs_tab)
 
         self.jobs_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
         self.create_columns(self.people_dataCols, self.jobs_columns, self.jobs_people)
+
+        #=============================ALL Items Tab====================================================================
+        self.items_dataCols = ("Item", "Cost", "Quantity Needed", "Where Needed", "Buying Status")
+        self.items_tab = ttk.Frame(self.tabControl)            # Create a tab 
+        self.tabControl.add(self.items_tab, text='Items')      # Add the tab
+        self.items_columns = ttk.Frame(self.items_tab)
+
+        self.all_items = ttk.Treeview(columns=self.items_dataCols, show= 'headings')
+        self.create_columns(self.items_dataCols, self.items_columns, self.all_items)
 
         #========================Creating Methods=========================================================================
     
@@ -200,12 +208,19 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         xsb = ttk.Scrollbar(orient=Tk.HORIZONTAL, command= tree.xview)
         tree['yscroll'] = ysb.set
         tree['xscroll'] = xsb.set
-        tree.tag_configure("Invited", foreground='purple', background='black')
-        tree.tag_configure("Coming", foreground='darkgreen', background='black')
-        tree.tag_configure(self.her_dad_fam, foreground='orange', background='black')
-        tree.tag_configure(self.his_dad_fam, foreground='green', background='black')
-        tree.tag_configure(self.her_mom_fam, foreground='blue', background='black')
-        tree.tag_configure(self.his_mom_fam, foreground='purple', background='black')
+        
+        
+
+        tree.tag_configure("Invited", foreground='purple')
+        tree.tag_configure("Coming", foreground='darkgreen')
+        try:
+            tree.tag_configure(self.her_dad_fam, foreground='orange')
+            tree.tag_configure(self.his_dad_fam, foreground='green')
+            tree.tag_configure(self.her_mom_fam, foreground='blue')
+            tree.tag_configure(self.his_mom_fam, foreground='purple')
+        except:
+            pass
+        
         # add tree and scrollbars to frame
         tree.grid(in_=columns, row=0, column=0, sticky=Tk.NSEW)
         ysb.grid(in_=columns, row=0, column=1, sticky=Tk.NS)
@@ -218,6 +233,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for n in dataCols:
             tree.heading(n, text=n.title(), command=lambda n=n: self.sort_data(tree, n, self.Sorted))
             tree.column(n, minwidth=0, width=100)
+            
+            
 
         self.load_people_data()
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
@@ -279,7 +296,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def add_person_window(self):
         self.person_window = Tk.Toplevel(self, background="gray12")
         self.person_window.wm_title("Add Person")
-        self.person_window.geometry("500x500")
+        self.person_window.geometry("550x500")
                     
         self.toolbar1 = Tk.Frame(self.person_window, bd=1, relief=Tk.RAISED, background="gray25")
         
@@ -377,8 +394,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def add_item_window(self):
         self.item_window = Tk.Toplevel(self, takefocus=True)
         self.item_window.wm_title("Add Item")
-        self.item_window.geometry("500x500")
-        self.item_window.attributes('-topmost', 'true')
+        self.item_window.geometry("550x500")
 
         self.item_toolbar1 = Tk.Frame(self.item_window, bd=1, relief=Tk.RAISED, background="gray25")
         
@@ -399,8 +415,32 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         ### Item Cost
         self.item_cost_label = Tk.Label(self.item_middle_frame, text="Cost: $", foreground="white", background="gray12")
         self.item_cost_label.grid(row=1, column=0, sticky="w")
-        self.item_cost_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=6)
+        self.item_cost_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=7)
         self.item_cost_ent.grid(row=1, column=1, sticky="w")
+
+        ### Number of Items
+        self.item_quantity_label = Tk.Label(self.item_middle_frame, text="Quantity:", foreground="white", background="gray12")
+        self.item_quantity_label.grid(row=2, column=0, sticky="w")
+        self.item_quantity_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=4)
+        self.item_quantity_ent.grid(row=2, column=1, sticky="w")
+
+        ### Where Needed
+        self.where_needed = Tk.StringVar(self.item_middle_frame)
+        self.where_needed_label = Tk.Label(self.item_middle_frame, text="Where Needed:", foreground="white", background="gray12")
+        self.where_needed_label.grid(row=3, column=0, sticky="w")
+        self.where_needed_listbox = Tk.OptionMenu(self.item_middle_frame, self.where_needed, "None", "Ceremony", "Reception")
+        self.where_needed_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.where_needed.set("None")
+        self.where_needed_listbox.grid(row=3, column=1, sticky="w")
+
+        ### Buying tatus
+        self.buying_status = Tk.StringVar(self.item_middle_frame)
+        self.buying_status_label = Tk.Label(self.item_middle_frame, text="Buying Status:", foreground="white", background="gray12")
+        self.buying_status_label.grid(row=4, column=0, sticky="w")
+        self.buying_status_listbox = Tk.OptionMenu(self.item_middle_frame, self.buying_status, "Might Buy", "Will Buy", "Purchased")
+        self.buying_status_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.buying_status.set("None")
+        self.buying_status_listbox.grid(row=4, column=1, sticky="w")
 
         ### Add note box at bottom
         self.item_nlabel = Tk.Label(self.item_bottom_frame, text="Notes:", foreground="white", background="gray12")
@@ -418,7 +458,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, bibleschool, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
         self.view_person.wm_title(" " + firstname + " " + lastname)
-        self.view_person.geometry("500x500")
+        self.view_person.geometry("550x500")
         self.view_person.attributes('-topmost', 'true')
         
         self.sql_fam = "SELECT * FROM relations"
@@ -541,6 +581,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         try:
             selection = tree.item(tree.selection())['values'][0]
             selection1 = tree.item(tree.selection())['values'][1]
+            
             sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
             self.id = self.cursor.execute(sql, (selection, selection1))
             self.conn.commit()
@@ -594,7 +635,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.destroy_window(self.person_window)
 
     def save_item_db(self):
-        pass
+        var_item = self.item_ent.get() # Get Item
+        var_cost = self.item_cost_ent.get() # Get Cost
+        var_quantity = self.item_quantity_ent.get() # Get Quantity
+        var_where_needed = self.where_needed.get() # Get Where Needed
+        var_buying_status = self.buying_status.get() # Get Buying Status
+
+        sql = "INSERT INTO items (item, cost, quantityneeded, whereneeded, buyingstatus) VALUES (?,?,?,?,?)"
+        res = self.cursor.execute(sql, (var_item, var_cost, var_quantity, var_where_needed, var_buying_status))
+        self.conn.commit()
 
     def save_cupfam_db(self):
         self.his_name = self.his_ent.get()
@@ -687,8 +736,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             xsb = ttk.Scrollbar(self.tree_cols, orient=Tk.HORIZONTAL, command= self.search_tree.xview)
             self.search_tree['yscroll'] = ysb.set
             self.search_tree['xscroll'] = xsb.set
-            self.search_tree.tag_configure("Invited", foreground='purple', background='black')
-            self.search_tree.tag_configure("Coming", foreground='darkgreen', background='black')
+            self.search_tree.tag_configure("Invited", foreground='purple')
+            self.search_tree.tag_configure("Coming", foreground='darkgreen')
             # add tree and scrollbars to frame
             self.search_tree.grid(in_=self.tree_cols, row=0, column=0, sticky=Tk.NSEW)
             ysb.grid(in_=self.tree_cols, row=0, column=1, sticky=Tk.NS)
@@ -750,6 +799,11 @@ def main():
         
     win = Tk.Tk()
     app = Application(win)
+    
+    if app.total_cost <= app.budget:
+        app.total_cost_price_label.configure(fg="green")
+    else:
+        app.total_cost_price_label.configure(fg="red")
     
     win.protocol("WM_DELETE_WINDOW", app.quit_main)
     win.mainloop()                     
