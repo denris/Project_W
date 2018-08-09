@@ -35,7 +35,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE people(ID integer PRIMARY KEY AUTOINCREMENT, firstname text, lastname text, address text, phone text, relationship text, family text,\
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
             self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
-                                CONSTRAINT name_unique UNIQUE (item))""")
+                                importance text, notes text, CONSTRAINT name_unique UNIQUE (item))""")
             self.conn.commit()
             #self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
 
@@ -115,19 +115,18 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.her_mom_fam = self.row[3]
         #==========================Define our Application================================================
         
-        self.toolbar = Tk.Frame(master, bd=1, background="gray25", relief=Tk.RAISED)
+        self.toolbar = Tk.Frame(master, background="gray25", bd=1, relief=Tk.RAISED)
         self.toolbar.pack(anchor="n", fill=Tk.X)
         
         self.add_person_image = Tk.PhotoImage(file='add_person.gif')
-        self.button = Tk.Button(self.toolbar, image=self.add_person_image, highlightbackground="gray25", command=self.add_person)
+        self.button = Tk.Button(self.toolbar, text="Add Person", image=self.add_person_image, compound=Tk.TOP, highlightbackground="gray25", command=self.add_person)
         self.button.pack(side="left",)
         
-        self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
-        self.separator1.pack(side="left", padx=1, fill=Tk.BOTH)
-
         self.add_item_button = Tk.Button(self.toolbar, text="+ Item" ,highlightbackground="gray25", command=self.add_item)
         self.add_item_button.pack(side="left",)
         
+        self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
+        self.separator1.pack(side="left", padx=1, fill=Tk.BOTH)
         #========================Main Frame=========================================================================
        
         self.main_frame = Tk.Frame(master, background="black")
@@ -162,9 +161,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tabControl.pack(expand=1, fill=Tk.BOTH)  # Pack to make visible
         self.style = ttk.Style()
         self.style.theme_use("clam")
-        self.style.configure(".", font=("Times", 12), background="black", foreground="black")
-        self.style.configure("Treeview", font=("Ariel", 14), background="black")
-        self.style.configure("Treeview.Heading", foreground='white', background="gray25")
+        self.style.configure("Treeview", font=("Ariel", 12), foreground="white", fieldbackground="black", background="black")
+        self.style.configure("TNotebook.Tab", font=("Ariel", 10, "bold"))
+        self.style.configure("TNotebook", background="black")
+        self.style.configure("Treeview.Heading", font=("Arial", 8, "italic"), background="gray25", foreground="white")
         
         #=============================All People Tab====================================================================
         self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
@@ -192,7 +192,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.create_columns(self.people_dataCols, self.jobs_columns, self.jobs_people)
 
         #=============================ALL Items Tab====================================================================
-        self.items_dataCols = ("Item", "Cost", "Quantity Needed", "Where Needed", "Buying Status")
+        self.items_dataCols = ("Item", "Cost", "Quantity Needed", "Where Needed", "Buying Status", "Importance")
         self.items_tab = ttk.Frame(self.tabControl)            # Create a tab 
         self.tabControl.add(self.items_tab, text='Items')      # Add the tab
         self.items_columns = ttk.Frame(self.items_tab)
@@ -209,10 +209,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         tree['yscroll'] = ysb.set
         tree['xscroll'] = xsb.set
         
-        
-
         tree.tag_configure("Invited", foreground='purple')
         tree.tag_configure("Coming", foreground='darkgreen')
+        tree.tag_configure("Low", foreground='darkgreen')
+        tree.tag_configure("Medium", foreground='yellow')
+        tree.tag_configure("High", foreground='red')
         try:
             tree.tag_configure(self.her_dad_fam, foreground='orange')
             tree.tag_configure(self.his_dad_fam, foreground='green')
@@ -232,11 +233,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         for n in dataCols:
             tree.heading(n, text=n.title(), command=lambda n=n: self.sort_data(tree, n, self.Sorted))
-            tree.column(n, minwidth=0, width=100)
+            tree.column(n, minwidth=0, width=100)         
             
-            
-
         self.load_people_data()
+        self.load_item_data()
+
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
         tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
         
@@ -279,7 +280,28 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             except:
                 pass
 
-                
+    def load_item_data(self):
+        try:
+            self.all_items.delete(*self.all_items.get_children())
+        except:
+            pass
+
+        sql = "SELECT item, cost, quantityneeded, whereneeded, buyingstatus, importance FROM items"
+        res = self.cursor.execute(sql)
+        self.conn.commit()
+
+        for row in res:
+            item = row[0]
+            cost = row[1]
+            quantity = row[2]
+            where_need = row[3]
+            buying_status = row[4]
+            importance = row[5]
+
+            try:
+                self.all_items.insert('', 'end', tags=[importance], values=[item, cost, quantity, where_need, buying_status, importance])
+            except:
+                pass
 
     def sort_data(self, tree, col, descending=False):
         # grab values to sort as a list of tuples (column value, column id)
@@ -336,13 +358,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relation.set("Our Friend")
         self.relationship_listbox.grid(row=4, column=1, sticky="w")
 
-        self.family = Tk.StringVar(self.middle_frame)
-        self.family_label = Tk.Label(self.middle_frame, text="Family:", foreground="white", background="gray12")
-        self.family_label.grid(row=5, column=0, sticky="w")
-        self.family_listbox = Tk.OptionMenu(self.middle_frame, self.family, "None", self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam)
-        self.family_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
-        self.family.set("None")
-        self.family_listbox.grid(row=5, column=1, sticky="w")
+        try:
+            self.family = Tk.StringVar(self.middle_frame)
+            self.family_label = Tk.Label(self.middle_frame, text="Family:", foreground="white", background="gray12")
+            self.family_label.grid(row=5, column=0, sticky="w")
+            self.family_listbox = Tk.OptionMenu(self.middle_frame, self.family, "None", self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam)
+            self.family_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+            self.family.set("None")
+            self.family_listbox.grid(row=5, column=1, sticky="w")
+        except:
+            pass
 
         self.is_bibleschool = Tk.IntVar()
         self.is_bibleschool_label = Tk.Label(self.middle_frame, text="Bibleschool:", highlightbackground="black", foreground="white", background="gray12")
@@ -442,6 +467,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.buying_status.set("None")
         self.buying_status_listbox.grid(row=4, column=1, sticky="w")
 
+        ### Item Importance
+        self.item_importance = Tk.StringVar(self.item_middle_frame)
+        self.item_importance_label = Tk.Label(self.item_middle_frame, text="Importance:", foreground="white", background="gray12")
+        self.item_importance_label.grid(row=5, column=0, sticky="w")
+        self.item_importance_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_importance, "Medium", "High")
+        self.item_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.item_importance.set("Low")
+        self.item_importance_listbox.grid(row=5, column=1, sticky="w")
+
         ### Add note box at bottom
         self.item_nlabel = Tk.Label(self.item_bottom_frame, text="Notes:", foreground="white", background="gray12")
         self.item_nlabel.pack(side="top", anchor="w")
@@ -453,8 +487,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.a_item_but = Tk.Button(self.item_toolbar1, text="Add", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.save_item_db)
         self.a_item_but.pack(side="left")
 
-
-
     def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, bibleschool, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
         self.view_person.wm_title(" " + firstname + " " + lastname)
@@ -464,11 +496,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.sql_fam = "SELECT * FROM relations"
         self.res_fam = self.cursor.execute(self.sql_fam)
         self.conn.commit()
-        for self.row in self.res_fam:
-            self.his_dad_fam = self.row[0]
-            self.her_dad_fam = self.row[1]
-            self.his_mom_fam = self.row[2]
-            self.her_mom_fam = self.row[3]
             
         self.toolbar1 = Tk.Frame(self.view_person, bd=1, relief=Tk.RAISED, background="gray25")
         
@@ -508,13 +535,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relation.set("Friend")
         self.relationship_listbox.grid(row=4, column=1, sticky="w")
 
-        self.family = Tk.StringVar(self.middle_frame)
-        self.family_label = Tk.Label(self.middle_frame, text="Family:", foreground="white", background="gray12")
-        self.family_label.grid(row=5, column=0, sticky="w")
-        self.family_listbox = Tk.OptionMenu(self.middle_frame, self.family, "None", self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam)
-        self.family_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
-        self.family.set("None")
-        self.family_listbox.grid(row=5, column=1, sticky="w")
+        try:
+            self.family = Tk.StringVar(self.middle_frame)
+            self.family_label = Tk.Label(self.middle_frame, text="Family:", foreground="white", background="gray12")
+            self.family_label.grid(row=5, column=0, sticky="w")
+            self.family_listbox = Tk.OptionMenu(self.middle_frame, self.family, "None", self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam)
+            self.family_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+            self.family.set("None")
+            self.family_listbox.grid(row=5, column=1, sticky="w")
+        except:
+            pass
 
         self.is_bibleschool = Tk.IntVar()
         self.is_bibleschool_label = Tk.Label(self.middle_frame, text="Bibleschool:", highlightbackground="black", foreground="white", background="gray12")
@@ -575,20 +605,99 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
         self.u_person_but = Tk.Button(self.toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_person_db)
         self.u_person_but.pack(side="left")
+
+    def update_view_item_window(self, item, cost, quantity, whereneeded, buyingstatus, importance, notes):
+        
+        self.view_item = Tk.Toplevel(self, takefocus=True)
+        self.view_item.wm_title(" " + item + " " + whereneeded)
+        self.view_item.geometry("550x500")
+
+        self.item_toolbar1 = Tk.Frame(self.view_item, bd=1, relief=Tk.RAISED, background="gray25")
+        
+        self.item_toolbar1.pack(side="top", fill=Tk.X)
+        
+        self.item_middle_frame = Tk.Frame(self.view_item, background="gray12")
+        self.item_middle_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        self.item_bottom_frame = Tk.Frame(self.view_item, background="gray12")
+        self.item_bottom_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        ### Add Item name label and box
+        self.item_label = Tk.Label(self.item_middle_frame, text="Item:", foreground="white", background="gray12")
+        self.item_label.grid(row=0, column=0, sticky="w")
+        self.item_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=20)
+        self.item_ent.grid(row=0, column=1, sticky="w")
+
+        ### Item Cost
+        self.item_cost_label = Tk.Label(self.item_middle_frame, text="Cost: $", foreground="white", background="gray12")
+        self.item_cost_label.grid(row=1, column=0, sticky="w")
+        self.item_cost_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=7)
+        self.item_cost_ent.grid(row=1, column=1, sticky="w")
+
+        ### Number of Items
+        self.item_quantity_label = Tk.Label(self.item_middle_frame, text="Quantity:", foreground="white", background="gray12")
+        self.item_quantity_label.grid(row=2, column=0, sticky="w")
+        self.item_quantity_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=4)
+        self.item_quantity_ent.grid(row=2, column=1, sticky="w")
+
+        ### Where Needed
+        self.where_needed = Tk.StringVar(self.item_middle_frame)
+        self.where_needed_label = Tk.Label(self.item_middle_frame, text="Where Needed:", foreground="white", background="gray12")
+        self.where_needed_label.grid(row=3, column=0, sticky="w")
+        self.where_needed_listbox = Tk.OptionMenu(self.item_middle_frame, self.where_needed, "None", "Ceremony", "Reception")
+        self.where_needed_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.where_needed.set("None")
+        self.where_needed_listbox.grid(row=3, column=1, sticky="w")
+
+        ### Buying tatus
+        self.buying_status = Tk.StringVar(self.item_middle_frame)
+        self.buying_status_label = Tk.Label(self.item_middle_frame, text="Buying Status:", foreground="white", background="gray12")
+        self.buying_status_label.grid(row=4, column=0, sticky="w")
+        self.buying_status_listbox = Tk.OptionMenu(self.item_middle_frame, self.buying_status, "Might Buy", "Will Buy", "Purchased")
+        self.buying_status_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.buying_status.set("None")
+        self.buying_status_listbox.grid(row=4, column=1, sticky="w")
+
+        ### Item Importance
+        self.item_importance = Tk.StringVar(self.item_middle_frame)
+        self.item_importance_label = Tk.Label(self.item_middle_frame, text="Importance:", foreground="white", background="gray12")
+        self.item_importance_label.grid(row=5, column=0, sticky="w")
+        self.item_importance_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_importance, "Medium", "High")
+        self.item_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.item_importance.set("Low")
+        self.item_importance_listbox.grid(row=5, column=1, sticky="w")
+
+        ### Add note box at bottom
+        self.item_nlabel = Tk.Label(self.item_bottom_frame, text="Notes:", foreground="white", background="gray12")
+        self.item_nlabel.pack(side="top", anchor="w")
+        self.item_ntext = Tk.Text(self.item_bottom_frame, height=10)
+        self.item_ntext.pack(expand=1, fill=Tk.BOTH)
+
+        ### Pulling info from tree
+        self.item_ent.insert(0,item)
+        self.item_cost_ent.insert(0,cost)
+        self.item_quantity_ent.insert(0,quantity)
+        self.where_needed.set(whereneeded)
+        self.buying_status.set(buyingstatus)
+        self.item_importance.set(importance)
+        self.item_ntext.insert(Tk.CURRENT, notes)
+
+        self.u_item_but = Tk.Button(self.item_toolbar1, text="Save", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_item_db)
+        self.u_item_but.pack(side="left")
     
     def OnDoubleClick(self, event, tree):
         # So double clicking heads don't throw error
         try:
             selection = tree.item(tree.selection())['values'][0]
             selection1 = tree.item(tree.selection())['values'][1]
-            
+
             sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
-            self.id = self.cursor.execute(sql, (selection, selection1))
+            self.peoplerowid = self.cursor.execute(sql, (selection, selection1))
             self.conn.commit()
             sql = "SELECT * FROM people WHERE ID=(?)"
-            for row in self.id:
-                self.rowid = row
-            view = self.cursor.execute(sql, (self.rowid))
+            for row in self.peoplerowid:
+                self.peoplerowid = row
+            view = self.cursor.execute(sql, (self.peoplerowid))
             self.conn.commit()
             
             for info in view:
@@ -608,8 +717,32 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 self.update_view_person_window(info[1], info[2], info[3], info[4], info[5], \
                                         info[6], info[7], info[8], info[9], info[10], info[11], info[12])
         except:
-            pass
+            try:
+                selection = tree.item(tree.selection())['values'][0]
+                selection1 = tree.item(tree.selection())['values'][1]
 
+                sql = "SELECT ID FROM items WHERE item=(?) AND cost=(?)"
+                self.itemrowid = self.cursor.execute(sql, (selection, selection1))
+                self.conn.commit()
+                sql = "SELECT * FROM items WHERE ID=(?)"
+                for row in self.itemrowid:
+                    self.itemrowid = row
+                view = self.cursor.execute(sql, (self.itemrowid))
+                self.conn.commit()
+                
+                for info in view:
+                    view_item = info[1]
+                    view_cost = info[2]
+                    view_quantity = info[3]
+                    view_where_needed = info[4]
+                    view_buying_status = info[5]
+                    view_importance = info[6]
+                    view_notes = info[7]
+                    
+                    self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7])
+            except:
+                pass     
+        
     def save_person_db(self):
         var_n = self.n_ent.get() # Get firstname
         var_ln = self.ln_ent.get() # Get Lastname
@@ -628,22 +761,24 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_bibleschool, var_numofpep, var_status, var_job, var_tablenum, var_notes))
         self.conn.commit()
         
-        # Update Tree
-        self.load_people_data()
-        
-        
-        #self.destroy_window(self.person_window)
+        # Update People Tree
+        self.load_people_data()        
 
     def save_item_db(self):
-        var_item = self.item_ent.get() # Get Item
-        var_cost = self.item_cost_ent.get() # Get Cost
-        var_quantity = self.item_quantity_ent.get() # Get Quantity
-        var_where_needed = self.where_needed.get() # Get Where Needed
-        var_buying_status = self.buying_status.get() # Get Buying Status
+        save_item = self.item_ent.get() # Get Item
+        save_cost = self.item_cost_ent.get() # Get Cost
+        save_quantity = self.item_quantity_ent.get() # Get Quantity
+        save_where_needed = self.where_needed.get() # Get Where Needed
+        save_buying_status = self.buying_status.get() # Get Buying Status
+        save_importance = self.item_importance.get() # Get Item Importance
+        save_notes = self.item_ntext.get("1.0", Tk.END) # Get Item Notes
 
-        sql = "INSERT INTO items (item, cost, quantityneeded, whereneeded, buyingstatus) VALUES (?,?,?,?,?)"
-        res = self.cursor.execute(sql, (var_item, var_cost, var_quantity, var_where_needed, var_buying_status))
+        sql = "INSERT INTO items (item, cost, quantityneeded, whereneeded, buyingstatus, importance, notes) VALUES (?,?,?,?,?,?,?)"
+        res = self.cursor.execute(sql, (save_item, save_cost, save_quantity, save_where_needed, save_buying_status, save_importance, save_notes))
         self.conn.commit()
+
+        # Update Item Tree
+        self.load_item_data()
 
     def save_cupfam_db(self):
         self.his_name = self.his_ent.get()
@@ -663,32 +798,51 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.destroy_window(self.message_window)
 
     def update_person_db(self):
-        var_n = self.n_ent.get() # Get firstname
-        var_ln = self.ln_ent.get() # Get Lastname
-        var_address = self.address_text.get("1.0", Tk.END) # Get address
-        var_phone = self.phone_ent.get()
-        var_relationship = self.relation.get() # Get relationship
-        var_fam = self.family.get() # Get Family
-        var_bibleschool = self.is_bibleschool.get() # Get if they went to Bibleschool with them
-        var_numofpep = self.n_coming.get() # Get number Coming
-        var_status = self.status.get() # Get Status
-        var_job = self.job.get() # Get Job
-        var_tablenum = self.table.get()
-        var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
+        update_n = self.n_ent.get() # Get firstname
+        update_ln = self.ln_ent.get() # Get Lastname
+        update_address = self.address_text.get("1.0", Tk.END) # Get address
+        update_phone = self.phone_ent.get()
+        update_relationship = self.relation.get() # Get relationship
+        update_fam = self.family.get() # Get Family
+        update_bibleschool = self.is_bibleschool.get() # Get if they went to Bibleschool with them
+        update_numofpep = self.n_coming.get() # Get number Coming
+        update_status = self.status.get() # Get Status
+        update_job = self.job.get() # Get Job
+        update_tablenum = self.table.get()
+        update_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
         sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-        res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_bibleschool, var_numofpep, var_status, var_job, var_tablenum, var_notes, self.rowid[0]))
+        res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
         self.conn.commit()
         
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
-        self.update_window_title(self.view_person, var_n, var_ln)
+        self.update_window_title(self.view_person, update_n, update_ln)
         try:
             self.search_tree.delete(*self.search_tree.get_children())
-            self.search_tree.insert('', 'end', tags=[var_status], values=[var_n, var_ln, var_phone, var_numofpep, var_status, var_job, var_relationship])
+            self.search_tree.insert('', 'end', tags=[update_status], values=[update_n, update_ln, update_phone, update_numofpep, update_status, update_job, update_relationship])
         except:
             pass
+
+    def update_item_db(self):
+        update_item = self.item_ent.get() # Get Item
+        update_cost = self.item_cost_ent.get() # Get Cost
+        update_quantity = self.item_quantity_ent.get() # Get Quantity
+        update_where_needed = self.where_needed.get() # Get Where Needed
+        update_buying_status = self.buying_status.get() # Get Buying Status
+        update_importance = self.item_importance.get() # Get Item Importance
+        update_notes = self.item_ntext.get("1.0", Tk.END) # Get Item Notes
+
+        sql = "UPDATE items SET item=(?), cost=(?), quantityneeded=(?), whereneeded=(?), buyingstatus=(?), importance=(?), notes=(?) WHERE ID=(?)"
+        res = self.cursor.execute(sql, (update_item, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_notes, self.itemrowid[0]))
+
+        self.conn.commit()
+
+        self.all_items.delete(*self.all_items.get_children())
+        self.load_item_data()
+        self.update_window_title(self.view_item, update_item, update_where_needed)
 
     def search_db(self, event, search):
         try:
@@ -708,9 +862,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql)
         self.conn.commit()
         
-        sql = "SELECT * FROM weddingsearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%')"
+        sql = "SELECT * FROM weddingsearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%') OR phone LIKE ('%' || ? || '%') \
+               OR relationship LIKE ('%' || ? || '%') OR numberofpeople LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
+        
         if search == self.search:
-            res = self.cursor.execute(sql, (results, results))
+            res = self.cursor.execute(sql, (results, results, results, results, results, results, results))
             self.conn.commit()
             
             ### Making the Search Window Appear ###
@@ -763,7 +919,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         else:
             self.update_window_title(self.search_window, "Search Results For:", sear_win_results)
             self.search_tree.delete(*self.search_tree.get_children())
-            res = self.cursor.execute(sql, (sear_win_results, sear_win_results))
+            res = self.cursor.execute(sql, (sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results))
             self.conn.commit()
             for row in res:
                 self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
@@ -771,8 +927,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             sql = "DROP TABLE weddingsearch"
             self.cursor.execute(sql)
             self.conn.commit()
-
-
         
     def add_person(self):
         self.add_person_window()
