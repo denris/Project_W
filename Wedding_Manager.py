@@ -845,28 +845,31 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.update_window_title(self.view_item, update_item, update_where_needed)
 
     def search_db(self, event, search):
-        try:
-            self.cursor.execute("""CREATE VIRTUAL TABLE weddingsearch USING fts4(ID, firstname, lastname, address, phone, relationship, family, bibleschool, \
-                                numberofpeople, status, job, tablenumber, notes)""")
-            self.conn.commit()
-        except:
-            pass
+        
+        self.cursor.execute("""CREATE VIRTUAL TABLE peoplesearch USING fts4(ID, firstname, lastname, address, phone, relationship, family, bibleschool, \
+                            numberofpeople, status, job, tablenumber, notes)""")
+        self.cursor.execute("""CREATE VIRTUAL TABLE itemsearch USING fts4(ID, item, cost, quantityneeded, whereneeded, buyingstatus, importance, notes)""")
+        
+        self.conn.commit()
         
         results = self.search.get()
+        
         try:
             sear_win_results = self.sear_win_sear.get()
         except:
             pass
 
-        sql = "INSERT INTO weddingsearch SELECT * FROM people"
+        sql = "INSERT INTO peoplesearch SELECT * FROM people"
+        res = self.cursor.execute(sql)
+        sql = "INSERT INTO itemsearch SELECT * FROM items"
         res = self.cursor.execute(sql)
         self.conn.commit()
         
-        sql = "SELECT * FROM weddingsearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%') OR phone LIKE ('%' || ? || '%') \
-               OR relationship LIKE ('%' || ? || '%') OR numberofpeople LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
+        sql = "SELECT * FROM peoplesearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%') OR phone LIKE ('%' || ? || '%') \
+               OR relationship LIKE ('%' || ? || '%') OR family LIKE ('%' || ? || '%') OR numberofpeople LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
         
         if search == self.search:
-            res = self.cursor.execute(sql, (results, results, results, results, results, results, results))
+            res = self.cursor.execute(sql, (results, results, results, results, results, results, results, results))
             self.conn.commit()
             
             ### Making the Search Window Appear ###
@@ -910,7 +913,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             for row in res:
                 self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
             
-            sql = "DROP TABLE weddingsearch"
+            sql = "DROP TABLE peoplesearch"
             self.cursor.execute(sql)
             self.conn.commit()
             
@@ -919,12 +922,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         else:
             self.update_window_title(self.search_window, "Search Results For:", sear_win_results)
             self.search_tree.delete(*self.search_tree.get_children())
-            res = self.cursor.execute(sql, (sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results))
+            res = self.cursor.execute(sql, (sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results))
             self.conn.commit()
             for row in res:
                 self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
             
-            sql = "DROP TABLE weddingsearch"
+            sql = "DROP TABLE peoplesearch"
             self.cursor.execute(sql)
             self.conn.commit()
         
