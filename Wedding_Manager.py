@@ -240,7 +240,35 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
         tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
+    
+    def create_search_columns(self, dataCols, columns):
+        columns.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+        ysb = ttk.Scrollbar(columns, orient=Tk.VERTICAL, command= self.search_tree.yview)
+        xsb = ttk.Scrollbar(columns, orient=Tk.HORIZONTAL, command= self.search_tree.xview)
+        self.search_tree['yscroll'] = ysb.set
+        self.search_tree['xscroll'] = xsb.set
         
+        ### Configure Tags
+        self.search_tree.tag_configure("Invited", foreground='purple')
+        self.search_tree.tag_configure("Coming", foreground='darkgreen')
+        self.search_tree.tag_configure("Low", foreground='darkgreen')
+        self.search_tree.tag_configure("Medium", foreground='yellow')
+        self.search_tree.tag_configure("High", foreground='red')
+                    
+        # add tree and scrollbars to frame
+        self.search_tree.grid(in_=columns, row=0, column=0, sticky=Tk.NSEW)
+        ysb.grid(in_=columns, row=0, column=1, sticky=Tk.NS)
+        xsb.grid(in_=columns, row=1, column=0, sticky=Tk.EW)
+        
+        # set frame resize priorities
+        self.tree_cols.rowconfigure(0, weight=1)
+        self.tree_cols.columnconfigure(0, weight=1)
+        
+        for n in dataCols:
+            self.search_tree.heading(n, text=n.title(), command=lambda n=n: self.sort_data(self.search_tree, n, self.Sorted))
+            self.search_tree.column(n, minwidth=0, width=100)
+        self.search_tree.delete(*self.search_tree.get_children())
+
     def load_people_data(self):
         # Clear the tree
         self.all_people.delete(*self.all_people.get_children())
@@ -471,7 +499,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_importance = Tk.StringVar(self.item_middle_frame)
         self.item_importance_label = Tk.Label(self.item_middle_frame, text="Importance:", foreground="white", background="gray12")
         self.item_importance_label.grid(row=5, column=0, sticky="w")
-        self.item_importance_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_importance, "Medium", "High")
+        self.item_importance_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_importance, "Low", "Medium", "High")
         self.item_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.item_importance.set("Low")
         self.item_importance_listbox.grid(row=5, column=1, sticky="w")
@@ -662,7 +690,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_importance = Tk.StringVar(self.item_middle_frame)
         self.item_importance_label = Tk.Label(self.item_middle_frame, text="Importance:", foreground="white", background="gray12")
         self.item_importance_label.grid(row=5, column=0, sticky="w")
-        self.item_importance_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_importance, "Medium", "High")
+        self.item_importance_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_importance, "Low", "Medium", "High")
         self.item_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.item_importance.set("Low")
         self.item_importance_listbox.grid(row=5, column=1, sticky="w")
@@ -843,6 +871,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.all_items.delete(*self.all_items.get_children())
         self.load_item_data()
         self.update_window_title(self.view_item, update_item, update_where_needed)
+        try:
+            self.search_tree.delete(*self.search_tree.get_children())
+            self.search_tree.insert('', 'end', tags=[update_importance], values=[update_item, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_notes])
+        except:
+            pass
 
     def search_db(self, event, search):
         
@@ -868,7 +901,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         sql = "SELECT * FROM peoplesearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%') OR phone LIKE ('%' || ? || '%') \
                OR relationship LIKE ('%' || ? || '%') OR family LIKE ('%' || ? || '%') OR numberofpeople LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
         
+        sql_items = "SELECT * FROM itemsearch WHERE item LIKE ('%' || ? || '%') OR whereneeded LIKE ('%' || ? || '%') OR buyingstatus LIKE ('%' || ? || '%') \
+                OR importance LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
+
         if search == self.search:
+            
             res = self.cursor.execute(sql, (results, results, results, results, results, results, results, results))
             self.conn.commit()
             
@@ -890,46 +927,80 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.tree_cols = ttk.Frame(self.search_window)
             self.search_tree = ttk.Treeview(self.tree_cols, columns=self.people_dataCols, show= 'headings')
                 
-            self.tree_cols.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
-            ysb = ttk.Scrollbar(self.tree_cols, orient=Tk.VERTICAL, command= self.search_tree.yview)
-            xsb = ttk.Scrollbar(self.tree_cols, orient=Tk.HORIZONTAL, command= self.search_tree.xview)
-            self.search_tree['yscroll'] = ysb.set
-            self.search_tree['xscroll'] = xsb.set
-            self.search_tree.tag_configure("Invited", foreground='purple')
-            self.search_tree.tag_configure("Coming", foreground='darkgreen')
-            # add tree and scrollbars to frame
-            self.search_tree.grid(in_=self.tree_cols, row=0, column=0, sticky=Tk.NSEW)
-            ysb.grid(in_=self.tree_cols, row=0, column=1, sticky=Tk.NS)
-            xsb.grid(in_=self.tree_cols, row=1, column=0, sticky=Tk.EW)
+            self.create_search_columns(self.people_dataCols, self.tree_cols)
             
-            # set frame resize priorities
-            self.tree_cols.rowconfigure(0, weight=1)
-            self.tree_cols.columnconfigure(0, weight=1)
-            
-            for n in self.people_dataCols:
-                self.search_tree.heading(n, text=n.title(), command=lambda n=n: self.sort_data(self.search_tree, n, self.Sorted))
-                self.search_tree.column(n, minwidth=0, width=100)
-            self.search_tree.delete(*self.search_tree.get_children())
             for row in res:
                 self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
             
-            sql = "DROP TABLE peoplesearch"
-            self.cursor.execute(sql)
-            self.conn.commit()
+            ### If it wasn't in people try items
+            if len(self.search_tree.get_children()) == 0:
+                
+                res = self.cursor.execute(sql_items, (results, results, results, results, results))
+                self.conn.commit()
+
+                self.search_tree = ttk.Treeview(self.tree_cols, columns=self.items_dataCols, show= 'headings')
+
+                self.create_search_columns(self.items_dataCols, self.tree_cols)           
+
+                for row in res:
+                    self.search_tree.insert('', 'end', tags=[row[6]], values=[row[1], row[2], row[3], row[4], row[5], row[6], row[7]])
+                
+
+                sql = "DROP TABLE peoplesearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
+
+                sql = "DROP TABLE itemsearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
+            else:
+            
+                sql = "DROP TABLE peoplesearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
+
+                sql = "DROP TABLE itemsearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
             
             self.search_tree.bind("<Double-1>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))
             self.search_tree.bind("<Return>", lambda event, arg=self.search_tree: self.OnDoubleClick(event, arg))
         else:
             self.update_window_title(self.search_window, "Search Results For:", sear_win_results)
-            self.search_tree.delete(*self.search_tree.get_children())
+            
             res = self.cursor.execute(sql, (sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results))
             self.conn.commit()
+            self.search_tree = ttk.Treeview(self.tree_cols, columns=self.people_dataCols, show= 'headings')
+
+            self.create_search_columns(self.people_dataCols, self.tree_cols)
+            
             for row in res:
                 self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
             
-            sql = "DROP TABLE peoplesearch"
-            self.cursor.execute(sql)
-            self.conn.commit()
+            ### If not in people search items
+            if len(self.search_tree.get_children()) == 0:
+                res = self.cursor.execute(sql_items, (sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results))
+                
+                self.create_search_columns(self.items_dataCols, self.tree_cols)
+
+                for row in res:
+                    self.search_tree.insert('', 'end', tags=[row[6]], values=[row[1], row[2], row[3], row[4], row[5], row[6], row[7]])
+
+                sql = "DROP TABLE peoplesearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
+
+                sql = "DROP TABLE itemsearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
+            else:
+                sql = "DROP TABLE peoplesearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
+
+                sql = "DROP TABLE itemsearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
         
     def add_person(self):
         self.add_person_window()
