@@ -28,7 +28,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.budget = 0.00
                 
         self.Sorted = True   # Setting flag for sorting columns
-
+        #=============================Set up Database====================================================================
         try:
             self.cursor.execute("""CREATE TABLE couple(hisname text, hername text)""")  # Create these tables if they don't already exist
             self.cursor.execute("""CREATE TABLE relations(hisdadside text, herdadside text, hismomside text, hermomside text)""")
@@ -38,15 +38,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 importance text, notes text, CONSTRAINT name_unique UNIQUE (item))""")
             self.cursor.execute("""CREATE TABLE budget(budget text, totalcost text)""")
             self.conn.commit()
+            
             #self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
             
             ### Add info if first time program opened
             self.add_cupfam_window()
         except:
             pass
-        
-        
-
         #==========================Define our Application================================================
         
         self.toolbar = Tk.Frame(master, background="gray25", bd=1, relief=Tk.RAISED)
@@ -63,12 +61,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", fill=Tk.BOTH)
 
+        
         sql1 = "SELECT * FROM couple"
         res1 = self.cursor.execute(sql1)
         for row in res1:
             self.his = row[0]
             self.her = row[1]
-    
+
 
         sql2 = "SELECT * FROM relations"
         res2 = self.cursor.execute(sql2)
@@ -78,12 +77,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.hismom = row[2]
             self.hermom = row[3]
 
+        self.conn.commit()
+
         #self.item_img = Tk.PhotoImage(file='add_item.gif') , image=self.item_img, compound=Tk.TOP
         self.update_cupfam_button = Tk.Button(self.toolbar, text="Cuple & Family", font=("Ariel", 7), highlightbackground="gray25", relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.hisdad, self.herdad, self.hismom, self.hermom))
         self.update_cupfam_button.pack(side="left")
         
+        
         #======================== Main Frame=========================================================================
-       
+        
         self.main_frame = Tk.Frame(master, background="black")
         self.main_frame.pack(expand=1, fill=Tk.BOTH)
 
@@ -157,8 +159,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.all_items = ttk.Treeview(columns=self.items_dataCols, show= 'headings')
         self.create_columns(self.items_dataCols, self.items_columns, self.all_items)
 
+        
+
         #========================Creating Methods=========================================================================
-    
+
     def create_columns(self, dataCols, columns, tree):
         columns.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
         ysb = ttk.Scrollbar(orient=Tk.VERTICAL, command= tree.yview)
@@ -190,15 +194,18 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         tree.tag_configure("Low", foreground='darkgreen')
         tree.tag_configure("Medium", foreground='yellow')
         tree.tag_configure("High", foreground='red')
-        tree.tag_configure(self.her_dad_fam, foreground='orange')
-        tree.tag_configure(self.his_dad_fam, foreground='green')
-        tree.tag_configure(self.her_mom_fam, foreground='blue')
-        tree.tag_configure(self.his_mom_fam, foreground='purple')
         
+        try:
+            tree.tag_configure(self.her_dad_fam, foreground='orange')
+            tree.tag_configure(self.his_dad_fam, foreground='green')
+            tree.tag_configure(self.her_mom_fam, foreground='blue')
+            tree.tag_configure(self.his_mom_fam, foreground='purple')
+        except:
+            pass
 
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
         tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
-    
+
     def create_search_columns(self, dataCols, columns):
         columns.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
         ysb = ttk.Scrollbar(columns, orient=Tk.VERTICAL, command= self.search_tree.yview)
@@ -234,11 +241,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # Clear the tree
         self.all_people.delete(*self.all_people.get_children())
         try:
-           self.family_people.delete(*self.family_people.get_children())
+            self.family_people.delete(*self.family_people.get_children())
         except:
             pass
         try:
-           self.jobs_people.delete(*self.jobs_people.get_children())
+            self.jobs_people.delete(*self.jobs_people.get_children())
         except:
             pass
 
@@ -301,7 +308,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.budget = row[1]
 
     def load_cupfam_data(self):
-          ### Setting the family instance variables ###
+            ### Setting the family instance variables ###
         sql_fam = "SELECT * FROM relations"
         res_fam = self.cursor.execute(sql_fam)
         self.conn.commit()
@@ -367,7 +374,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relationship_listbox.grid(row=4, column=1, sticky="w")
 
         self.load_cupfam_data()
-    
+
         self.family = Tk.StringVar(self.middle_frame)
         self.family_label = Tk.Label(self.middle_frame, text="Family:", foreground="white", background="gray12")
         self.family_label.grid(row=5, column=0, sticky="w")
@@ -615,7 +622,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.family.set("None")
         self.family_listbox.grid(row=5, column=1, sticky="w")
-    
+
         self.is_bibleschool = Tk.IntVar()
         self.is_bibleschool_label = Tk.Label(self.middle_frame, text="Bibleschool:", highlightbackground="black", foreground="white", background="gray12")
         self.is_bibleschool_label.grid(row=6, column=0, sticky="w")
@@ -1045,7 +1052,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
         
         sql = "SELECT * FROM peoplesearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%') OR phone LIKE ('%' || ? || '%') \
-               OR relationship LIKE ('%' || ? || '%') OR family LIKE ('%' || ? || '%') OR numberofpeople LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
+                OR relationship LIKE ('%' || ? || '%') OR family LIKE ('%' || ? || '%') OR numberofpeople LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
         
         sql_items = "SELECT * FROM itemsearch WHERE item LIKE ('%' || ? || '%') OR whereneeded LIKE ('%' || ? || '%') OR buyingstatus LIKE ('%' || ? || '%') \
                 OR importance LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
@@ -1159,7 +1166,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
     def destroy_window(self, window):
         window.destroy()
-    
+
     def quit_main(self):
         self.master.destroy()
         self.cursor.close()
