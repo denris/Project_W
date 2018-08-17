@@ -119,14 +119,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.toolbar.pack(anchor="n", fill=Tk.X)
         
         self.add_person_image = Tk.PhotoImage(file='add_person.gif')
-        self.button = Tk.Button(self.toolbar, text="Add Person", image=self.add_person_image, compound=Tk.TOP, highlightbackground="gray25", command=self.add_person)
+        self.button = Tk.Button(self.toolbar, text="Add Person", font=("Ariel", 7), image=self.add_person_image, compound=Tk.TOP, relief=Tk.FLAT, highlightbackground="gray25", command=self.add_person)
         self.button.pack(side="left",)
-        
-        self.add_item_button = Tk.Button(self.toolbar, text="+ Item" ,highlightbackground="gray25", command=self.add_item)
-        self.add_item_button.pack(side="left",)
+
+        self.item_img = Tk.PhotoImage(file='add_item.gif')
+        self.add_item_button = Tk.Button(self.toolbar, text="Add Item", font=("Ariel", 7), image=self.item_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_item)
+        self.add_item_button.pack(side="left")
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
-        self.separator1.pack(side="left", padx=1, fill=Tk.BOTH)
+        self.separator1.pack(side="left", fill=Tk.BOTH)
         #========================Main Frame=========================================================================
        
         self.main_frame = Tk.Frame(master, background="black")
