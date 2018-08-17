@@ -23,9 +23,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         self.conn = sqlite3.connect("W_management.db") # Establish Database Connection
         self.cursor = self.conn.cursor()
+        
+        ### Things that will be dynamically populated ###
         self.jobs = ["None", "Photographer", "Server", "Sermon", "Gift Receiver"]
         self.total_cost = 0.00
         self.budget = 0.00
+        self.her = " "
+        self.his_dad_fam = " "
+        self.her_dad_fam = " "
+        self.his_mom_fam = " "
+        self.her_mom_fam = " "
                 
         self.Sorted = True   # Setting flag for sorting columns
         #=============================Set up Database====================================================================
@@ -38,11 +45,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 importance text, notes text, CONSTRAINT name_unique UNIQUE (item))""")
             self.cursor.execute("""CREATE TABLE budget(budget text, totalcost text)""")
             self.conn.commit()
+            self.his = " "
+        
             
             #self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
             
             ### Add info if first time program opened
             self.add_cupfam_window()
+            
         except:
             pass
         #==========================Define our Application================================================
@@ -61,27 +71,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", fill=Tk.BOTH)
 
-        
-        sql1 = "SELECT * FROM couple"
-        res1 = self.cursor.execute(sql1)
-        for row in res1:
-            self.his = row[0]
-            self.her = row[1]
-
-
-        sql2 = "SELECT * FROM relations"
-        res2 = self.cursor.execute(sql2)
-        for row in res2:
-            self.hisdad = row[0]
-            self.herdad = row[1]
-            self.hismom = row[2]
-            self.hermom = row[3]
-
-        self.conn.commit()
-
         #self.item_img = Tk.PhotoImage(file='add_item.gif') , image=self.item_img, compound=Tk.TOP
-        self.update_cupfam_button = Tk.Button(self.toolbar, text="Cuple & Family", font=("Ariel", 7), highlightbackground="gray25", relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.hisdad, self.herdad, self.hismom, self.hermom))
+        self.update_cupfam_button = Tk.Button(self.toolbar, text="Cuple & Family", font=("Ariel", 7), highlightbackground="gray25", relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam))
         self.update_cupfam_button.pack(side="left")
+        
         
         
         #======================== Main Frame=========================================================================
@@ -194,15 +187,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         tree.tag_configure("Low", foreground='darkgreen')
         tree.tag_configure("Medium", foreground='yellow')
         tree.tag_configure("High", foreground='red')
+        tree.tag_configure(self.his_dad_fam, foreground='green')
+        tree.tag_configure(self.her_dad_fam, foreground='orange')
+        tree.tag_configure(self.his_mom_fam, foreground='purple')
+        tree.tag_configure(self.her_mom_fam, foreground='blue')  
         
-        try:
-            tree.tag_configure(self.her_dad_fam, foreground='orange')
-            tree.tag_configure(self.his_dad_fam, foreground='green')
-            tree.tag_configure(self.her_mom_fam, foreground='blue')
-            tree.tag_configure(self.his_mom_fam, foreground='purple')
-        except:
-            pass
-
+        
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
         tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
 
@@ -309,6 +299,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def load_cupfam_data(self):
             ### Setting the family instance variables ###
+        sql_coup = "SELECT * FROM couple"
+        res_coup = self.cursor.execute(sql_coup)
+        for row in res_coup:
+            self.his = row[0]
+            self.her = row[1]
+
         sql_fam = "SELECT * FROM relations"
         res_fam = self.cursor.execute(sql_fam)
         self.conn.commit()
@@ -952,6 +948,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
         self.destroy_window(self.message_window)
 
+        self.load_cupfam_data()
+
     def update_person_db(self):
         update_n = self.n_ent.get() # Get firstname
         update_ln = self.ln_ent.get() # Get Lastname
@@ -1026,6 +1024,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         sql2 = "UPDATE relations SET hisdadside=(?), herdadside=(?), hismomside=(?), hermomside=(?)"
         self.ins_fam2 = self.cursor.execute(sql2, (update_his_dadside_fam, update_her_dadside_fam, update_his_momside_fam, update_her_momside_fam))
         self.conn.commit()
+
+        self.load_cupfam_data()
 
     def search_db(self, event, search):
         
