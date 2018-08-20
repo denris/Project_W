@@ -27,6 +27,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         ### Things that will be dynamically populated ###
         self.jobs = ["None", "Photographer", "Server", "Sermon", "Gift Receiver"]
         self.total_cost = 0.00
+        self.str_total_cost = "0.00"
         self.budget = 0.00
         self.str_budget= "0.00"
         self.his = ""
@@ -300,9 +301,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             except:
                 pass
             
-        
-            
-
     def load_budget_data(self):
         ### Setting Budget information ###
         self.update_total_cost_db()
@@ -311,20 +309,27 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res_budget = self.cursor.execute(sql_budget)
         for row in res_budget:
             self.budget = row[0]
-            self.total_cost = row[1]
-            
-        print self.budget
+            self.total_cost = row[1]            
+        
         if len(str(self.budget)) >= 6:
             self.str_budget = str(self.budget) 
             self.str_budget = self.str_budget[:-5] + ',' + self.str_budget[-5:] + "0"
-            print self.str_budget
+        else:
+            self.str_budget = str(self.budget) + "0"
+            
+        if len(str(self.total_cost)) >= 6:
+            self.str_total_cost = str(self.total_cost) 
+            self.str_total_cost = self.str_total_cost[:-5] + ',' + self.str_total_cost[-5:] + "0"
+        else:
+            self.str_total_cost = str(self.total_cost) + "0"
+            
 
         self.budget_label.configure(text="Budget: ${}".format(self.str_budget))
 
         if self.total_cost <= self.budget:
-            self.total_cost_price_label.configure(fg="green", text="${:.2f}".format(self.total_cost))
+            self.total_cost_price_label.configure(fg="green", text="${}".format(self.str_total_cost))
         else:
-            self.total_cost_price_label.configure(fg="red", text="${:.2f}".format(self.total_cost))
+            self.total_cost_price_label.configure(fg="red", text="${}".format(self.str_total_cost))
 
     def load_cupfam_data(self):
         ### Setting the family instance variables ###
@@ -980,6 +985,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def update_total_cost_db(self):
         
+        self.total_cost = 0.00
         
         sql = "SELECT cost, quantityneeded from items"
         res= self.cursor.execute(sql)
