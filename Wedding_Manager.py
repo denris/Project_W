@@ -44,8 +44,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE relations(hisdadside text, herdadside text, hismomside text, hermomside text)""")
             self.cursor.execute("""CREATE TABLE people(ID integer PRIMARY KEY AUTOINCREMENT, firstname text, lastname text, address text, phone text, relationship text, family text,\
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
-            self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
-                                importance text, notes text, CONSTRAINT name_unique UNIQUE (item))""")
+            self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, description text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
+                                importance text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.conn.commit()
 
@@ -161,7 +161,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.create_columns(self.people_dataCols, self.jobs_columns, self.jobs_people)
 
         #=============================ALL Items Tab====================================================================
-        self.items_dataCols = ("Item", "Cost", "Quantity Needed", "Where Needed", "Buying Status", "Importance")
+        self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Importance")
         self.items_tab = ttk.Frame(self.tabControl)            # Create a tab 
         self.tabControl.add(self.items_tab, text='Items')      # Add the tab
         self.items_columns = ttk.Frame(self.items_tab)
@@ -172,6 +172,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_budget_data()
         self.load_cupfam_data()
         self.load_item_data()
+        self.load_people_data()
 
     #========================Creating Methods=========================================================================
 
@@ -202,12 +203,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         tree.tag_configure("Medium", foreground='yellow')
         tree.tag_configure("High", foreground='red')
         
-        self.load_people_data()
-        
-        
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
-        tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))      
-
+        tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))    
+        
     def create_search_columns(self, dataCols, columns):
         columns.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
         ysb = ttk.Scrollbar(columns, orient=Tk.VERTICAL, command= self.search_tree.yview)
@@ -284,20 +282,21 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         except:
             pass
 
-        sql = "SELECT item, cost, quantityneeded, whereneeded, buyingstatus, importance FROM items"
+        sql = "SELECT item, description, cost, quantityneeded, whereneeded, buyingstatus, importance FROM items"
         res = self.cursor.execute(sql)
         self.conn.commit()
 
         for row in res:
             item = row[0]
-            cost = row[1]
-            quantity = row[2]
-            where_need = row[3]
-            buying_status = row[4]
-            importance = row[5]
+            desc = row[1]
+            cost = row[2]
+            quantity = row[3]
+            where_need = row[4]
+            buying_status = row[5]
+            importance = row[6]
             
             try:
-                self.all_items.insert('', 'end', tags=[importance], values=[item, cost, quantity, where_need, buying_status, importance])
+                self.all_items.insert('', 'end', tags=[importance], values=[item, desc, cost, quantity, where_need, buying_status, importance])
             except:
                 pass
             
@@ -489,44 +488,50 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=20)
         self.item_ent.grid(row=0, column=1, sticky="w")
 
+        ### Add Item description
+        self.item_desc_label = Tk.Label(self.item_middle_frame, text="Description:", foreground="white", background="gray12")
+        self.item_desc_label.grid(row=1, column=0, sticky="w")
+        self.item_desc_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=35)
+        self.item_desc_ent.grid(row=1, column=1, sticky="w")
+
         ### Item Cost
         self.item_cost_label = Tk.Label(self.item_middle_frame, text="Cost: $", foreground="white", background="gray12")
-        self.item_cost_label.grid(row=1, column=0, sticky="w")
+        self.item_cost_label.grid(row=2, column=0, sticky="w")
         self.item_cost_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=7)
-        self.item_cost_ent.grid(row=1, column=1, sticky="w")
+        self.item_cost_ent.grid(row=2, column=1, sticky="w")
 
         ### Number of Items
         self.item_quantity_label = Tk.Label(self.item_middle_frame, text="Quantity:", foreground="white", background="gray12")
-        self.item_quantity_label.grid(row=2, column=0, sticky="w")
+        self.item_quantity_label.grid(row=3, column=0, sticky="w")
         self.item_quantity_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=4)
-        self.item_quantity_ent.grid(row=2, column=1, sticky="w")
+        self.item_quantity_ent.grid(row=3, column=1, sticky="w")
 
         ### Where Needed
         self.where_needed = Tk.StringVar(self.item_middle_frame)
         self.where_needed_label = Tk.Label(self.item_middle_frame, text="Where Needed:", foreground="white", background="gray12")
-        self.where_needed_label.grid(row=3, column=0, sticky="w")
+        self.where_needed_label.grid(row=4, column=0, sticky="w")
         self.where_needed_listbox = Tk.OptionMenu(self.item_middle_frame, self.where_needed, "None", "Ceremony", "Reception")
         self.where_needed_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.where_needed.set("None")
-        self.where_needed_listbox.grid(row=3, column=1, sticky="w")
+        self.where_needed_listbox.grid(row=4, column=1, sticky="w")
 
         ### Buying tatus
         self.buying_status = Tk.StringVar(self.item_middle_frame)
         self.buying_status_label = Tk.Label(self.item_middle_frame, text="Buying Status:", foreground="white", background="gray12")
-        self.buying_status_label.grid(row=4, column=0, sticky="w")
+        self.buying_status_label.grid(row=5, column=0, sticky="w")
         self.buying_status_listbox = Tk.OptionMenu(self.item_middle_frame, self.buying_status, "Might Buy", "Will Buy", "Purchased")
         self.buying_status_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.buying_status.set("None")
-        self.buying_status_listbox.grid(row=4, column=1, sticky="w")
+        self.buying_status_listbox.grid(row=5, column=1, sticky="w")
 
         ### Item Importance
         self.item_importance = Tk.StringVar(self.item_middle_frame)
         self.item_importance_label = Tk.Label(self.item_middle_frame, text="Importance:", foreground="white", background="gray12")
-        self.item_importance_label.grid(row=5, column=0, sticky="w")
+        self.item_importance_label.grid(row=6, column=0, sticky="w")
         self.item_importance_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_importance, "Low", "Medium", "High")
         self.item_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.item_importance.set("Low")
-        self.item_importance_listbox.grid(row=5, column=1, sticky="w")
+        self.item_importance_listbox.grid(row=6, column=1, sticky="w")
 
         ### Add note box at bottom
         self.item_nlabel = Tk.Label(self.item_bottom_frame, text="Notes:", foreground="white", background="gray12")
@@ -657,10 +662,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.u_person_but = Tk.Button(self.toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_person_db)
         self.u_person_but.pack(side="left")
 
-    def update_view_item_window(self, item, cost, quantity, whereneeded, buyingstatus, importance, notes):
+    def update_view_item_window(self, item, desc, cost, quantity, whereneeded, buyingstatus, importance, notes):
         
         self.view_item = Tk.Toplevel(self, takefocus=True)
-        self.view_item.wm_title(" " + item + " " + whereneeded)
+        self.view_item.wm_title(" " + item + " " + desc)
         self.view_item.geometry("550x500")
 
         self.item_toolbar1 = Tk.Frame(self.view_item, bd=1, relief=Tk.RAISED, background="gray25")
@@ -679,44 +684,50 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=20)
         self.item_ent.grid(row=0, column=1, sticky="w")
 
+        ### Add Item description
+        self.item_desc_label = Tk.Label(self.item_middle_frame, text="Description:", foreground="white", background="gray12")
+        self.item_desc_label.grid(row=1, column=0, sticky="w")
+        self.item_desc_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=35)
+        self.item_desc_ent.grid(row=1, column=1, sticky="w")
+
         ### Item Cost
         self.item_cost_label = Tk.Label(self.item_middle_frame, text="Cost: $", foreground="white", background="gray12")
-        self.item_cost_label.grid(row=1, column=0, sticky="w")
+        self.item_cost_label.grid(row=2, column=0, sticky="w")
         self.item_cost_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=7)
-        self.item_cost_ent.grid(row=1, column=1, sticky="w")
+        self.item_cost_ent.grid(row=2, column=1, sticky="w")
 
         ### Number of Items
         self.item_quantity_label = Tk.Label(self.item_middle_frame, text="Quantity:", foreground="white", background="gray12")
-        self.item_quantity_label.grid(row=2, column=0, sticky="w")
+        self.item_quantity_label.grid(row=3, column=0, sticky="w")
         self.item_quantity_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=4)
-        self.item_quantity_ent.grid(row=2, column=1, sticky="w")
+        self.item_quantity_ent.grid(row=3, column=1, sticky="w")
 
         ### Where Needed
         self.where_needed = Tk.StringVar(self.item_middle_frame)
         self.where_needed_label = Tk.Label(self.item_middle_frame, text="Where Needed:", foreground="white", background="gray12")
-        self.where_needed_label.grid(row=3, column=0, sticky="w")
+        self.where_needed_label.grid(row=4, column=0, sticky="w")
         self.where_needed_listbox = Tk.OptionMenu(self.item_middle_frame, self.where_needed, "None", "Ceremony", "Reception")
         self.where_needed_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.where_needed.set("None")
-        self.where_needed_listbox.grid(row=3, column=1, sticky="w")
+        self.where_needed_listbox.grid(row=4, column=1, sticky="w")
 
         ### Buying tatus
         self.buying_status = Tk.StringVar(self.item_middle_frame)
         self.buying_status_label = Tk.Label(self.item_middle_frame, text="Buying Status:", foreground="white", background="gray12")
-        self.buying_status_label.grid(row=4, column=0, sticky="w")
+        self.buying_status_label.grid(row=5, column=0, sticky="w")
         self.buying_status_listbox = Tk.OptionMenu(self.item_middle_frame, self.buying_status, "Might Buy", "Will Buy", "Purchased")
         self.buying_status_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.buying_status.set("None")
-        self.buying_status_listbox.grid(row=4, column=1, sticky="w")
+        self.buying_status_listbox.grid(row=5, column=1, sticky="w")
 
         ### Item Importance
         self.item_importance = Tk.StringVar(self.item_middle_frame)
         self.item_importance_label = Tk.Label(self.item_middle_frame, text="Importance:", foreground="white", background="gray12")
-        self.item_importance_label.grid(row=5, column=0, sticky="w")
+        self.item_importance_label.grid(row=6, column=0, sticky="w")
         self.item_importance_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_importance, "Low", "Medium", "High")
         self.item_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.item_importance.set("Low")
-        self.item_importance_listbox.grid(row=5, column=1, sticky="w")
+        self.item_importance_listbox.grid(row=6, column=1, sticky="w")
 
         ### Add note box at bottom
         self.item_nlabel = Tk.Label(self.item_bottom_frame, text="Notes:", foreground="white", background="gray12")
@@ -726,7 +737,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         ### Pulling info from tree
         self.item_ent.insert(0,item)
-        self.item_cost_ent.insert(0,cost)
+        self.item_desc_ent.insert(0,desc)
+        self.item_cost_ent.insert(0,cost)        
         self.item_quantity_ent.insert(0,quantity)
         self.where_needed.set(whereneeded)
         self.buying_status.set(buyingstatus)
@@ -858,7 +870,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 selection = tree.item(tree.selection())['values'][0]
                 selection1 = tree.item(tree.selection())['values'][1]
 
-                sql = "SELECT ID FROM items WHERE item=(?) AND cost=(?)"
+                sql = "SELECT ID FROM items WHERE item=(?) AND description=(?)"
                 self.itemrowid = self.cursor.execute(sql, (selection, selection1))
                 self.conn.commit()
                 sql = "SELECT * FROM items WHERE ID=(?)"
@@ -869,14 +881,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 
                 for info in view:
                     view_item = info[1]
-                    view_cost = info[2]
-                    view_quantity = info[3]
-                    view_where_needed = info[4]
-                    view_buying_status = info[5]
-                    view_importance = info[6]
-                    view_notes = info[7]
+                    view_desc = info[2]
+                    view_cost = info[3]
+                    view_quantity = info[4]
+                    view_where_needed = info[5]
+                    view_buying_status = info[6]
+                    view_importance = info[7]
+                    view_notes = info[8]
                     
-                    self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7])
+                    self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7], info[8])
             except:
                 pass     
         
@@ -903,6 +916,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def save_item_db(self):
         save_item = self.item_ent.get() # Get Item
+        save_desc = self.item_desc_ent.get() # Get Description
         save_cost = self.item_cost_ent.get() # Get Cost
         save_quantity = self.item_quantity_ent.get() # Get Quantity
         save_where_needed = self.where_needed.get() # Get Where Needed
@@ -910,8 +924,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         save_importance = self.item_importance.get() # Get Item Importance
         save_notes = self.item_ntext.get("1.0", Tk.END) # Get Item Notes
 
-        sql = "INSERT INTO items (item, cost, quantityneeded, whereneeded, buyingstatus, importance, notes) VALUES (?,?,?,?,?,?,?)"
-        res = self.cursor.execute(sql, (save_item, save_cost, save_quantity, save_where_needed, save_buying_status, save_importance, save_notes))
+        sql = "INSERT INTO items (item, description, cost, quantityneeded, whereneeded, buyingstatus, importance, notes) VALUES (?,?,?,?,?,?,?,?)"
+        res = self.cursor.execute(sql, (save_item, save_desc, save_cost, save_quantity, save_where_needed, save_buying_status, save_importance, save_notes))
         self.conn.commit()
 
         # Update Item Tree
@@ -950,6 +964,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def update_item_db(self):
         update_item = self.item_ent.get() # Get Item
+        update_desc = self.item_desc_ent.get() # Get Item Desc
         update_cost = self.item_cost_ent.get() # Get Cost
         update_quantity = self.item_quantity_ent.get() # Get Quantity
         update_where_needed = self.where_needed.get() # Get Where Needed
@@ -957,20 +972,21 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         update_importance = self.item_importance.get() # Get Item Importance
         update_notes = self.item_ntext.get("1.0", Tk.END) # Get Item Notes
 
-        sql = "UPDATE items SET item=(?), cost=(?), quantityneeded=(?), whereneeded=(?), buyingstatus=(?), importance=(?), notes=(?) WHERE ID=(?)"
-        res = self.cursor.execute(sql, (update_item, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_notes, self.itemrowid[0]))
+        sql = "UPDATE items SET item=(?), description=(?), cost=(?), quantityneeded=(?), whereneeded=(?), buyingstatus=(?), importance=(?), notes=(?) WHERE ID=(?)"
+        res = self.cursor.execute(sql, (update_item, update_desc, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_notes, self.itemrowid[0]))
 
         self.conn.commit()
 
         self.all_items.delete(*self.all_items.get_children())
-        self.load_item_data()
+        
+        self.load_item_data() # Reload the items tree to reflect changes
+        
+        self.load_budget_data() # Update the Buget/Total
 
-        self.load_budget_data()
-
-        self.update_window_title(self.view_item, update_item, update_where_needed)
+        self.update_window_title(self.view_item, update_item, update_desc)
         try:
             self.search_tree.delete(*self.search_tree.get_children())
-            self.search_tree.insert('', 'end', tags=[update_importance], values=[update_item, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_notes])
+            self.search_tree.insert('', 'end', tags=[update_importance], values=[update_item, update_desc, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_notes])
         except:
             pass
 
@@ -984,18 +1000,21 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_budget_data()
 
     def update_total_cost_db(self):
-        
+        # Reset cost so same items don't get added more than once
         self.total_cost = 0.00
         
-        sql = "SELECT cost, quantityneeded from items"
+        sql = "SELECT cost, quantityneeded, buyingstatus from items"
         res= self.cursor.execute(sql)
         self.conn.commit()
 
         for row in res:
             cost = row[0]
             quantity = row[1]
+            buyingstatus = row[2]
 
-            self.total_cost += float(cost) * int(quantity)
+            # Only update cost if will buy or purchased
+            if buyingstatus == "Will Buy" or buyingstatus == "Purchased":
+                self.total_cost += float(cost) * int(quantity)
 
         sql = "UPDATE budget SET totalcost=(?)"
         res= self.cursor.execute(sql, (self.total_cost,))
@@ -1024,7 +1043,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         try:
             self.cursor.execute("""CREATE VIRTUAL TABLE peoplesearch USING fts4(ID, firstname, lastname, address, phone, relationship, family, bibleschool, \
                                 numberofpeople, status, job, tablenumber, notes)""")
-            self.cursor.execute("""CREATE VIRTUAL TABLE itemsearch USING fts4(ID, item, cost, quantityneeded, whereneeded, buyingstatus, importance, notes)""")
+            self.cursor.execute("""CREATE VIRTUAL TABLE itemsearch USING fts4(ID, item, description, cost, quantityneeded, whereneeded, buyingstatus, importance, notes)""")
             
             self.conn.commit()
         except:
@@ -1046,7 +1065,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         sql = "SELECT * FROM peoplesearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%') OR phone LIKE ('%' || ? || '%') \
                 OR relationship LIKE ('%' || ? || '%') OR family LIKE ('%' || ? || '%') OR numberofpeople LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
         
-        sql_items = "SELECT * FROM itemsearch WHERE item LIKE ('%' || ? || '%') OR whereneeded LIKE ('%' || ? || '%') OR buyingstatus LIKE ('%' || ? || '%') \
+        sql_items = "SELECT * FROM itemsearch WHERE item LIKE ('%' || ? || '%') OR description LIKE ('%' || ? || '%') OR whereneeded LIKE ('%' || ? || '%') OR buyingstatus LIKE ('%' || ? || '%') \
                 OR importance LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
 
         if search == self.search:
@@ -1080,7 +1099,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             ### If it wasn't in people try items
             if len(self.search_tree.get_children()) == 0:
                 
-                res = self.cursor.execute(sql_items, (results, results, results, results, results))
+                res = self.cursor.execute(sql_items, (results, results, results, results, results, results))
                 self.conn.commit()
 
                 self.search_tree = ttk.Treeview(self.tree_cols, columns=self.items_dataCols, show= 'headings')
@@ -1123,7 +1142,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             
             ### If not in people search items
             if len(self.search_tree.get_children()) == 0:
-                res = self.cursor.execute(sql_items, (sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results))
+                res = self.cursor.execute(sql_items, (sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results))
                 
                 self.search_tree = ttk.Treeview(self.tree_cols, columns=self.items_dataCols, show= 'headings')
                 self.create_search_columns(self.items_dataCols, self.tree_cols)
