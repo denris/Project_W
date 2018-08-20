@@ -28,6 +28,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.jobs = ["None", "Photographer", "Server", "Sermon", "Gift Receiver"]
         self.total_cost = 0.00
         self.budget = 0.00
+        self.str_budget= "0.00"
         self.his = ""
         self.her = ""
         self.his_dad_fam = ""
@@ -84,8 +85,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", fill=Tk.BOTH, padx=2)
 
-        self.cupfam_img = Tk.PhotoImage(file='cupfam.gif')
-        self.update_cupfam_button = Tk.Button(self.toolbar, text="Couple", font=("Ariel", 7), image=self.cupfam_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam))
+        #self.cupfam_img = Tk.PhotoImage(file='cupfam.gif'), image=self.cupfam_img
+        self.update_cupfam_button = Tk.Button(self.toolbar, text="Couple", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam))
         self.update_cupfam_button.pack(side="left")
 
         #self.bug_img = Tk.PhotoImage(file="budget.gif"), image=self.budget_img
@@ -167,6 +168,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.all_items = ttk.Treeview(columns=self.items_dataCols, show= 'headings')
         self.create_columns(self.items_dataCols, self.items_columns, self.all_items)
 
+        self.load_budget_data()
+        self.load_cupfam_data()
+        self.load_item_data()
+
     #========================Creating Methods=========================================================================
 
     def create_columns(self, dataCols, columns, tree):
@@ -196,13 +201,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         tree.tag_configure("Medium", foreground='yellow')
         tree.tag_configure("High", foreground='red')
         
-        self.load_cupfam_data()
         self.load_people_data()
-        self.load_item_data()
-        self.load_budget_data()
-
+        
+        
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
-        tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
+        tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))      
 
     def create_search_columns(self, dataCols, columns):
         columns.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
@@ -291,24 +294,37 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             where_need = row[3]
             buying_status = row[4]
             importance = row[5]
-
+            
             try:
                 self.all_items.insert('', 'end', tags=[importance], values=[item, cost, quantity, where_need, buying_status, importance])
             except:
                 pass
+            
+        
+            
 
     def load_budget_data(self):
         ### Setting Budget information ###
+        self.update_total_cost_db()
+
         sql_budget = "SELECT * FROM budget"
         res_budget = self.cursor.execute(sql_budget)
         for row in res_budget:
-            self.total_cost = row[0]
-            self.budget = row[1]
+            self.budget = row[0]
+            self.total_cost = row[1]
+            
+        print self.budget
+        if len(str(self.budget)) >= 6:
+            self.str_budget = str(self.budget) 
+            self.str_budget = self.str_budget[:-5] + ',' + self.str_budget[-5:] + "0"
+            print self.str_budget
+
+        self.budget_label.configure(text="Budget: ${}".format(self.str_budget))
 
         if self.total_cost <= self.budget:
-            self.total_cost_price_label.configure(fg="green")
+            self.total_cost_price_label.configure(fg="green", text="${:.2f}".format(self.total_cost))
         else:
-            self.total_cost_price_label.configure(fg="red")
+            self.total_cost_price_label.configure(fg="red", text="${:.2f}".format(self.total_cost))
 
     def load_cupfam_data(self):
         ### Setting the family instance variables ###
@@ -895,6 +911,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         # Update Item Tree
         self.load_item_data()
+        # Update total_cost
+        self.load_budget_data()
 
     def update_person_db(self):
         update_n = self.n_ent.get() # Get firstname
@@ -941,6 +959,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.all_items.delete(*self.all_items.get_children())
         self.load_item_data()
+
+        self.load_budget_data()
+
         self.update_window_title(self.view_item, update_item, update_where_needed)
         try:
             self.search_tree.delete(*self.search_tree.get_children())
@@ -952,10 +973,27 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         view_bugdet = self.total_budget_ent.get()
 
         sql = "UPDATE budget SET budget=(?)"
-        res= self.cursor.execute(sql, view_bugdet)
+        res= self.cursor.execute(sql, (view_bugdet,))
         self.conn.commit()
 
         self.load_budget_data()
+
+    def update_total_cost_db(self):
+        
+        
+        sql = "SELECT cost, quantityneeded from items"
+        res= self.cursor.execute(sql)
+        self.conn.commit()
+
+        for row in res:
+            cost = row[0]
+            quantity = row[1]
+
+            self.total_cost += float(cost) * int(quantity)
+
+        sql = "UPDATE budget SET totalcost=(?)"
+        res= self.cursor.execute(sql, (self.total_cost,))
+        self.conn.commit()
 
     def update_cupfam_db(self):
         update_his_name = self.his_ent.get()
