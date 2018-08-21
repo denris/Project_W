@@ -25,7 +25,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.cursor = self.conn.cursor()
         
         ### Things that will be dynamically populated ###
-        self.jobs = ["None", "Photographer", "Server", "Sermon", "Gift Receiver"]
+        self.jobs = ["None", "Best Man", "Maid of Honor", "Bridesmaid", "Groomsman", "Bridle Table Server", "Server", "Cleanup", "Devotional", "Guest Register", \
+                     "Gift Receiver", "Usher", "Master of Ceremony", "Photographer", "Prayer For Meal", "Welcome And Prayer", "Sermon", "Singer", "Vows"]
         self.total_cost = 0.00
         self.str_total_cost = "0.00"
         self.budget = 0.00
@@ -47,6 +48,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, description text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
                                 importance text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
+            self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
             self.conn.commit()
 
             #self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
@@ -82,6 +84,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_img = Tk.PhotoImage(file='add_item.gif')
         self.add_item_button = Tk.Button(self.toolbar, text="Add Item", font=("Ariel", 7), image=self.item_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_item)
         self.add_item_button.pack(side="left")
+
+        #self.job_img = Tk.PhotoImage(file='job_img.gif'), image=self.job_img
+        self.add_job_button = Tk.Button(self.toolbar, text="Add Job", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
+        self.add_job_button.pack(side="left")
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", fill=Tk.BOTH, padx=2)
@@ -143,6 +149,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         self.all_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
         self.create_columns(self.people_dataCols, self.all_people_columns, self.all_people)      # Add the tab
+
+        #=============================Bridle Party====================================================================
+        self.bp_tab = ttk.Frame(self.tabControl)            # Create a tab 
+        self.tabControl.add(self.bp_tab, text='Bridle Party')      # Add the tab
+        self.bp_columns = ttk.Frame(self.bp_tab)
+
+        self.bp_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
+        self.create_columns(self.people_dataCols, self.bp_columns, self.bp_people)
         
         #=============================Family Tab====================================================================
         self.family_tab = ttk.Frame(self.tabControl)            # Create a tab 
@@ -170,6 +184,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.create_columns(self.items_dataCols, self.items_columns, self.all_items)
 
         self.load_budget_data()
+        self.load_job_data()
         self.load_cupfam_data()
         self.load_item_data()
         self.load_people_data()
@@ -353,7 +368,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.family_people.tag_configure(self.her_mom_fam, foreground='blue')
         except:
             pass
-        
+
+    def load_job_data(self):
+        sql = "SELECT * FROM jobs"
+        res = self.cursor.execute(sql)
+        self.conn.commit()
+
+        for row in res:
+            self.jobs.append(row[0])          
+
     def sort_data(self, tree, col, descending=False):
         # grab values to sort as a list of tuples (column value, column id)
         # e.g. [('Person1', 'I001'), ('Person2', 'I002'), ('Person3', 'I003')]
@@ -419,7 +442,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family.set("None")
         self.family_listbox.grid(row=5, column=1, sticky="w")
         
-
         self.is_bibleschool = Tk.IntVar()
         self.is_bibleschool_label = Tk.Label(self.middle_frame, text="Bibleschool:", highlightbackground="black", foreground="white", background="gray12")
         self.is_bibleschool_label.grid(row=6, column=0, sticky="w")
@@ -433,7 +455,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.n_coming_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
         self.n_coming.set(1)
         self.n_coming_listbox.grid(row=4, column=2, sticky="w")
-        
+
         self.job = Tk.StringVar(self.middle_frame)
         self.jobs_label = Tk.Label(self.middle_frame, text="Job:", foreground="white", background="gray12")
         self.jobs_label.grid(row=0, column=2, sticky="w")
@@ -543,6 +565,22 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
         self.a_item_but = Tk.Button(self.item_toolbar1, text="Add", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.save_item_db)
         self.a_item_but.pack(side="left")
+
+    def add_delete_job_window(self):
+        self.job_window = Tk.Toplevel(self, takefocus=True, background="gray12")
+        self.job_window.wm_title("Add/Delete Job")
+        self.job_window.geometry("200x50")
+
+        self.job_label = Tk.Label(self.job_window, text="Job/Role:", foreground="white", background="gray12")
+        self.job_label.grid(row=0, column=0)
+        self.job_ent = Tk.Entry(self.job_window, highlightbackground="gray12", width=20)
+        self.job_ent.grid(row=0, column=1, sticky="w")
+
+        self.d_job_but = Tk.Button(self.job_window, text="Delete", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.delete_job_db)
+        self.d_job_but.grid(row=1, column=1)
+
+        self.a_job_but = Tk.Button(self.job_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_job_db)
+        self.a_job_but.grid(row=1, column=1, sticky="e")
               
     def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, bibleschool, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
@@ -751,7 +789,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def update_view_budget_window(self, budget):
         self.view_budget_window = Tk.Toplevel(self, takefocus=True, background="gray12")
         self.view_budget_window.wm_title("Enter/Update Budget")
-        self.view_budget_window.geometry("175x50")
+        self.view_budget_window.geometry("200x50")
 
         self.total_budget_Label = Tk.Label(self.view_budget_window, text="Budget:", foreground="white", background="gray12")
         self.total_budget_Label.grid(row=0, column=0)
@@ -932,6 +970,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_item_data()
         # Update total_cost
         self.load_budget_data()
+
+    def save_job_db(self):
+        save_job = self.job_ent.get() # Get Job
+
+        sql = "INSERT INTO jobs (job) VALUES (?)"
+        res = self.cursor.execute(sql, (save_job,))
+        self.conn.commit()
+
+        self.load_job_data()
 
     def update_person_db(self):
         update_n = self.n_ent.get() # Get firstname
@@ -1165,12 +1212,24 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 sql = "DROP TABLE itemsearch"
                 self.cursor.execute(sql)
                 self.conn.commit()
+
+    def delete_job_db(self):
+        delete_job = self.job_ent.get() # Get Job
         
+        self.jobs.remove(delete_job)
+        
+        sql = "DELETE FROM jobs WHERE job=(?)"
+        res = self.cursor.execute(sql, (delete_job,))
+        self.conn.commit()
+           
     def add_person(self):
         self.add_person_window()
 
     def add_item(self):
         self.add_item_window()
+
+    def add_job(self):
+        self.add_delete_job_window()
 
     def update_window_title(self, window, firstname, lastname):
         window.wm_title(" " + firstname + " " + lastname)
