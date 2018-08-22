@@ -49,9 +49,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
             self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, description text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
                                 importance text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
+            self.cursor.execute("""CREATE TABLE tables(ID integer PRIMARY KEY AUTOINCREMENT, number int, people text, remaining int, relationship text, family text)""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
-            self.cursor.execute("""CREATE TABLE tables(ID integer PRIMARY KEY AUTOINCREMENT, numtables int, numpeptable int, people text, relationship text, family text)""")
+            self.cursor.execute("""CREATE TABLE tableinfo(numtables int, numpeptable int)""")
+            
             self.conn.commit()
 
             #self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
@@ -103,16 +105,20 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.separator1.pack(side="left", fill=Tk.BOTH, padx=2)
 
         #self.cupfam_img = Tk.PhotoImage(file='cupfam.gif'), image=self.cupfam_img
-        self.update_cupfam_button = Tk.Button(self.toolbar, text="Couple", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam))
-        self.update_cupfam_button.pack(side="left")
+        self.cupfam_button = Tk.Button(self.toolbar, text="Couple", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam))
+        self.cupfam_button.pack(side="left")
 
         #self.bug_img = Tk.PhotoImage(file="budget.gif"), image=self.budget_img
         self.budget_button = Tk.Button(self.toolbar, text="Budget", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_budget_window(self.budget))
         self.budget_button.pack(side="left")
 
         #self.job_img = Tk.PhotoImage(file='job_img.gif'), image=self.job_img
-        self.add_job_button = Tk.Button(self.toolbar, text="Jobs", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
-        self.add_job_button.pack(side="left")
+        self.jobs_button = Tk.Button(self.toolbar, text="Jobs", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
+        self.jobs_button.pack(side="left")
+
+        #self.tables_img = Tk.PhotoImage(file='tables_img.gif'), image=self.tables_img
+        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_budget_window(self.tables, self.table_num_pep))
+        self.tables_button.pack(side="left")
         
         #======================== Main Frame=========================================================================
         
@@ -818,10 +824,31 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.total_budget_ent = Tk.Entry(self.view_budget_window, highlightbackground="gray12", width=8)
         self.total_budget_ent.grid(row=0, column=1, sticky="w")
 
+        self.total_budget_ent.insert(0, budget)
+
         self.u_budget_but = Tk.Button(self.view_budget_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.update_budget_db)
         self.u_budget_but.grid(row=1, column=1, sticky="e")
         
-        self.total_budget_ent.insert(0, budget)
+    def update_view_tables_window(self, tables, numpeptables):
+        self.view_tables_window = Tk.Toplevel(self, takefocus=True, background="gray12")
+        self.view_tables_window.wm_title("Enter/Update Tables")
+        self.view_tables_window.geometry("200x50")
+
+        self.tables_label = Tk.Label(self.view_tables_window, text="Num Tables:", foreground="white", background="gray12")
+        self.tables_label.grid(row=0, column=0)
+        self.tables_ent = Tk.Entry(self.view_tables_window, highlightbackground="gray12", width=10)
+        self.tables_ent.grid(row=0, column=1, sticky="w")
+
+        self.numpeptable_label = Tk.Label(self.view_tables_window, text="Num Per Table:", foreground="white", background="gray12")
+        self.numpeptable_label.grid(row=1, column=0)
+        self.numpeptable_ent = Tk.Entry(self.view_tables_window, highlightbackground="gray12", width=10)
+        self.numpeptable_ent.grid(row=1, column=1, sticky="w")
+
+        self.tables_ent.insert(0, tables)
+        self.numpeptable_ent.insert(0, numpeptables)
+
+        self.u_tables_but = Tk.Button(self.view_tables_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_job_db)
+        self.u_tables_but.grid(row=1, column=1, sticky="e")
 
     def update_view_cupfam_window(self, his, her, hisdad, herdad, hismom, hermom):
         self.view_message_window = Tk.Toplevel(self, takefocus=True)
