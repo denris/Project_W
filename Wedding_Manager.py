@@ -25,8 +25,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.cursor = self.conn.cursor()
         
         ### Things that will be dynamically populated ###
-        self.jobs = ["None", "Best Man", "Maid of Honor", "Bridesmaid", "Groomsman", "Bridle Table Server", "Server", "Cleanup", "Devotional", "Guest Register", \
-                     "Gift Receiver", "Usher", "Master of Ceremony", "Photographer", "Prayer For Meal", "Welcome And Prayer", "Sermon", "Singer", "Vows"]
+        self.jobs = []
+        self.tables = 0
+        self.table_num_pep = 0
+        self.stores = []
         self.total_cost = 0.00
         self.str_total_cost = "0.00"
         self.budget = 0.00
@@ -49,6 +51,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 importance text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
+            self.cursor.execute("""CREATE TABLE tables(ID integer PRIMARY KEY AUTOINCREMENT, numtables int, numpeptable int, people text, relationship text, family text)""")
             self.conn.commit()
 
             #self.message = tkMessageBox.showinfo("Title", "Congratulations, who is getting married?")
@@ -65,6 +68,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             ### Init budget
             sql = "INSERT INTO budget (budget, totalcost) VALUES (?,?)"
             res = self.cursor.execute(sql, (self.budget, self.total_cost))
+            self.conn.commit()
+
+            ### Init Jobs
+            sql = "INSERT INTO jobs (job) VALUES (?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?)"
+            res = self.cursor.execute(sql, ("None", "Best Man", "Maid of Honor", "Bridesmaid", "Groomsman", "Bridle Table Server", "Server", "Cleanup", "Devotional", "Guest Register", \
+                                            "Gift Receiver", "Usher", "Master of Ceremony", "Photographer", "Prayer For Meal", "Welcome And Prayer", "Sermon", "Singer", "Vows",))
+            self.conn.commit()
+
+            ### Init Tables
+            sql = "INSERT INTO tables (numtables, numpeptable) VALUES (?,?)"
+            res = self.cursor.execute(sql, (self.tables, self.table_num_pep))
             self.conn.commit()
             
             ### Add info if first time program opened
@@ -84,10 +98,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_img = Tk.PhotoImage(file='add_item.gif')
         self.add_item_button = Tk.Button(self.toolbar, text="Add Item", font=("Ariel", 7), image=self.item_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_item)
         self.add_item_button.pack(side="left")
-
-        #self.job_img = Tk.PhotoImage(file='job_img.gif'), image=self.job_img
-        self.add_job_button = Tk.Button(self.toolbar, text="Add Job", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
-        self.add_job_button.pack(side="left")
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", fill=Tk.BOTH, padx=2)
@@ -98,7 +108,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         #self.bug_img = Tk.PhotoImage(file="budget.gif"), image=self.budget_img
         self.budget_button = Tk.Button(self.toolbar, text="Budget", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_budget_window(self.budget))
-        self.budget_button.pack(side="left")      
+        self.budget_button.pack(side="left")
+
+        #self.job_img = Tk.PhotoImage(file='job_img.gif'), image=self.job_img
+        self.add_job_button = Tk.Button(self.toolbar, text="Jobs", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
+        self.add_job_button.pack(side="left")
         
         #======================== Main Frame=========================================================================
         
@@ -263,6 +277,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.jobs_people.delete(*self.jobs_people.get_children())
         except:
             pass
+        try:
+            self.bp_people.delete(*self.bp_people.get_children())
+        except:
+            pass
 
         sql = "SELECT firstname, lastname, phone, numberofpeople, status, job, relationship, family FROM people"
         res = self.cursor.execute(sql)
@@ -288,6 +306,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             try: 
                 if job != "None":
                     self.jobs_people.insert('', 'end', tags=[job], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+            except:
+                pass
+            try: 
+                if job == "Best Man" or job == "Maid of Honor" or job == "Bridesmaid" or job == "Groomsman":
+                    self.bp_people.insert('', 'end', tags=[job], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             except:
                 pass
 
@@ -370,12 +393,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             pass
 
     def load_job_data(self):
+        self.jobs = []
+        
         sql = "SELECT * FROM jobs"
         res = self.cursor.execute(sql)
         self.conn.commit()
 
         for row in res:
-            self.jobs.append(row[0])          
+            if row[0] not in self.jobs:
+                self.jobs.append(row[0])          
 
     def sort_data(self, tree, col, descending=False):
         # grab values to sort as a list of tuples (column value, column id)
@@ -432,8 +458,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relation.set("Our Friend")
         self.relationship_listbox.grid(row=4, column=1, sticky="w")
 
-        self.load_cupfam_data()
-
         self.family = Tk.StringVar(self.middle_frame)
         self.family_label = Tk.Label(self.middle_frame, text="Family:", foreground="white", background="gray12")
         self.family_label.grid(row=5, column=0, sticky="w")
@@ -457,7 +481,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.n_coming_listbox.grid(row=4, column=2, sticky="w")
 
         self.job = Tk.StringVar(self.middle_frame)
-        self.jobs_label = Tk.Label(self.middle_frame, text="Job:", foreground="white", background="gray12")
+        self.jobs_label = Tk.Label(self.middle_frame, text="Job/Role:", foreground="white", background="gray12")
         self.jobs_label.grid(row=0, column=2, sticky="w")
         self.jobs_box = Tk.OptionMenu(self.middle_frame, self.job, *self.jobs)
         self.jobs_box.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
@@ -629,8 +653,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relationship_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.relation.set("Friend")
         self.relationship_listbox.grid(row=4, column=1, sticky="w")
-
-        self.load_cupfam_data()
         
         self.family = Tk.StringVar(self.middle_frame)
         self.family_label = Tk.Label(self.middle_frame, text="Family:", foreground="white", background="gray12")
@@ -655,7 +677,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.n_coming_listbox.grid(row=4, column=2, sticky="w")
         
         self.job = Tk.StringVar(self.middle_frame)
-        self.jobs_label = Tk.Label(self.middle_frame, text="Job:", foreground="white", background="gray12")
+        self.jobs_label = Tk.Label(self.middle_frame, text="Job/Role:", foreground="white", background="gray12")
         self.jobs_label.grid(row=0, column=2, sticky="w")
         self.jobs_box = Tk.OptionMenu(self.middle_frame, self.job, *self.jobs)
         self.jobs_box.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
@@ -1215,12 +1237,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def delete_job_db(self):
         delete_job = self.job_ent.get() # Get Job
-        
-        self.jobs.remove(delete_job)
-        
-        sql = "DELETE FROM jobs WHERE job=(?)"
+                
+        sql = "DELETE FROM jobs WHERE job LIKE (?)"
         res = self.cursor.execute(sql, (delete_job,))
         self.conn.commit()
+        
+        self.load_job_data()
            
     def add_person(self):
         self.add_person_window()
