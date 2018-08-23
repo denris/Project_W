@@ -388,6 +388,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         sql = "SELECT * FROM tableinfo"
         res = self.cursor.execute(sql)
+        self.conn.commit()
         for row in res:
             self.tables = row[0]
             self.table_num_pep = row[1]
@@ -396,7 +397,36 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def load_tables_data(self):
 
-        for row in range(1, self.tables + 1):
+        try:
+            self.all_tables.delete(*self.all_tables.get_children())
+        except:
+            pass
+
+        sql = "SELECT count(*) FROM tables"
+        res = self.cursor.execute(sql)
+
+        for row in res:
+            self.number = row[0]
+            print row[0]
+        
+        if self.number == self.tables:
+            pass
+        elif self.number > self.tables:
+            for row in range((self.number - self.tables)):
+                sql = "DELETE FROM tables WHERE ID = (SELECT MAX(ID) FROM tables)"
+                res = self.cursor.execute(sql)
+                self.conn.commit()
+        else:
+            for row in range((self.tables - self.number)):
+                sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
+                res = self.cursor.execute(sql, ("","","","",""))
+                self.conn.commit()
+        
+        sql = "Select * from tables"
+        res = self.cursor.execute(sql)
+        self.conn.commit()
+        
+        for row in res:
             try:
                 self.all_tables.insert('', 'end', tags=[], values=[row,])
             except:    
@@ -906,7 +936,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family.set("None")
         self.family_listbox.grid(row=1, column=1, sticky="w")
 
-        self.tables_people_label = (self.tables_middle_frame, text="People:", foreground="white", background="gray12")
+        self.tables_people_label = Tk.Label(self.tables_middle_frame, text="People:", foreground="white", background="gray12")
         self.tables_people_label.grid(row=2, column=0, sticky="w")
         self.tables_people_list = Tk.Listbox(self.tables_middle_frame)
         self.tables_people_list.grid(row=2, column=2, sticky="w")
@@ -1054,7 +1084,26 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7], info[8])
             except:
                 try:
+                    selection = tree.item(tree.selection())['values'][0]
+                    #selection1 = tree.item(tree.selection())['values'][1]
 
+                    sql = "SELECT ID FROM tables WHERE ID=(?)"
+                    self.tablerowid = self.cursor.execute(sql, (selection,))
+                    self.conn.commit()
+                    sql = "SELECT * FROM tables WHERE ID=(?)"
+                    for row in self.tablerowid:
+                        self.tablerowid = row
+                    view = self.cursor.execute(sql, (self.tablerowid))
+                    self.conn.commit()
+
+                    for info in view:
+                        people = info[1]
+                        relationship = info[3]
+                        family = info[4]
+                        notes = info[5]
+
+
+                    self.update_view_tables_window(self.tablerowid, people, relationship, family, notes)
                 except:
                     pass     
         
@@ -1184,7 +1233,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_table_data()
 
     def update_tables_db(self):
-
+        pass
     def update_total_cost_db(self):
         # Reset cost so same items don't get added more than once
         self.total_cost = 0.00
