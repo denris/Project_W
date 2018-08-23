@@ -49,7 +49,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
             self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, description text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
                                 importance text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
-            self.cursor.execute("""CREATE TABLE tables(ID integer PRIMARY KEY AUTOINCREMENT, number int, people text, remaining int, relationship text, family text)""")
+            self.cursor.execute("""CREATE TABLE tables(ID integer PRIMARY KEY AUTOINCREMENT, people text, remaining int, relationship text, family text, notes text)""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
             self.cursor.execute("""CREATE TABLE tableinfo(numtables int, numpeptable int)""")
@@ -79,7 +79,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.conn.commit()
 
             ### Init Tables
-            sql = "INSERT INTO tables (numtables, numpeptable) VALUES (?,?)"
+            sql = "INSERT INTO tableinfo (numtables, numpeptable) VALUES (?,?)"
             res = self.cursor.execute(sql, (self.tables, self.table_num_pep))
             self.conn.commit()
             
@@ -94,30 +94,30 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.toolbar.pack(anchor="n", fill=Tk.X)
         
         self.add_person_image = Tk.PhotoImage(file='add_person.gif')
-        self.button = Tk.Button(self.toolbar, text="Add Person", font=("Ariel", 7), image=self.add_person_image, compound=Tk.TOP, relief=Tk.FLAT, highlightbackground="gray25", command=self.add_person)
+        self.button = Tk.Button(self.toolbar, text="Add Person", font=("Ariel", 8), image=self.add_person_image, compound=Tk.TOP, relief=Tk.FLAT, highlightbackground="gray25", command=self.add_person)
         self.button.pack(side="left")
 
         self.item_img = Tk.PhotoImage(file='add_item.gif')
-        self.add_item_button = Tk.Button(self.toolbar, text="Add Item", font=("Ariel", 7), image=self.item_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_item)
+        self.add_item_button = Tk.Button(self.toolbar, text="Add Item", font=("Ariel", 8), image=self.item_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_item)
         self.add_item_button.pack(side="left")
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", fill=Tk.BOTH, padx=2)
 
         #self.cupfam_img = Tk.PhotoImage(file='cupfam.gif'), image=self.cupfam_img
-        self.cupfam_button = Tk.Button(self.toolbar, text="Couple", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam))
+        self.cupfam_button = Tk.Button(self.toolbar, text="Couple", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam))
         self.cupfam_button.pack(side="left")
 
         #self.bug_img = Tk.PhotoImage(file="budget.gif"), image=self.budget_img
-        self.budget_button = Tk.Button(self.toolbar, text="Budget", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_budget_window(self.budget))
+        self.budget_button = Tk.Button(self.toolbar, text="Budget", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_budget_window(self.budget))
         self.budget_button.pack(side="left")
 
         #self.job_img = Tk.PhotoImage(file='job_img.gif'), image=self.job_img
-        self.jobs_button = Tk.Button(self.toolbar, text="Jobs", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
+        self.jobs_button = Tk.Button(self.toolbar, text="Jobs", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
         self.jobs_button.pack(side="left")
 
         #self.tables_img = Tk.PhotoImage(file='tables_img.gif'), image=self.tables_img
-        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 7), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_budget_window(self.tables, self.table_num_pep))
+        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_tableinfo_window(self.tables, self.table_num_pep))
         self.tables_button.pack(side="left")
         
         #======================== Main Frame=========================================================================
@@ -144,7 +144,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.search_frame.pack(anchor="n", fill=Tk.X, pady=5)
         self.search_label = Tk.Label(self.search_frame, text="Search:", font=("Arial", 11), background="black", foreground="white")
         self.search_label.pack(side="left")
-        self.search = Tk.Entry(self.search_frame)
+        self.search = Tk.Entry(self.search_frame, highlightbackground="black")
         self.search.pack(anchor="w", fill=Tk.X, pady=2)
 
         self.search.bind("<Return>", lambda event, arg=self.search: self.search_db(event, arg))
@@ -203,8 +203,18 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.all_items = ttk.Treeview(columns=self.items_dataCols, show= 'headings')
         self.create_columns(self.items_dataCols, self.items_columns, self.all_items)
 
+        #=============================ALL Tables Tab====================================================================
+        self.table_dataCols = ("Number", "People", "Remaining", "relationship", "family")
+        self.table_tab = ttk.Frame(self.tabControl)            # Create a tab 
+        self.tabControl.add(self.table_tab, text='Tables')      # Add the tab
+        self.table_columns = ttk.Frame(self.table_tab)
+
+        self.all_tables = ttk.Treeview(columns=self.table_dataCols, show= 'headings')
+        self.create_columns(self.table_dataCols, self.table_columns, self.all_tables)
+
         self.load_budget_data()
         self.load_job_data()
+        self.load_table_data()
         self.load_cupfam_data()
         self.load_item_data()
         self.load_people_data()
@@ -374,6 +384,24 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         else:
             self.total_cost_price_label.configure(fg="red", text="${}".format(self.str_total_cost))
 
+    def load_table_data(self):
+        
+        sql = "SELECT * FROM tableinfo"
+        res = self.cursor.execute(sql)
+        for row in res:
+            self.tables = row[0]
+            self.table_num_pep = row[1]
+
+        self.load_tables_data()
+
+    def load_tables_data(self):
+
+        for row in range(1, self.tables + 1):
+            try:
+                self.all_tables.insert('', 'end', tags=[], values=[row,])
+            except:    
+                pass
+    
     def load_cupfam_data(self):
         ### Setting the family instance variables ###
         sql_coup = "SELECT * FROM couple"
@@ -599,7 +627,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def add_delete_job_window(self):
         self.job_window = Tk.Toplevel(self, takefocus=True, background="gray12")
         self.job_window.wm_title("Add/Delete Job")
-        self.job_window.geometry("200x50")
+        self.job_window.geometry("300x75")
 
         self.job_label = Tk.Label(self.job_window, text="Job/Role:", foreground="white", background="gray12")
         self.job_label.grid(row=0, column=0)
@@ -617,10 +645,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.view_person.wm_title(" " + firstname + " " + lastname)
         self.view_person.geometry("550x500")
         self.view_person.attributes('-topmost', 'true')
-        
-        self.sql_fam = "SELECT * FROM relations"
-        self.res_fam = self.cursor.execute(self.sql_fam)
-        self.conn.commit()
             
         self.toolbar1 = Tk.Frame(self.view_person, bd=1, relief=Tk.RAISED, background="gray25")
         
@@ -817,7 +841,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def update_view_budget_window(self, budget):
         self.view_budget_window = Tk.Toplevel(self, takefocus=True, background="gray12")
         self.view_budget_window.wm_title("Enter/Update Budget")
-        self.view_budget_window.geometry("200x50")
+        self.view_budget_window.geometry("200x75")
 
         self.total_budget_Label = Tk.Label(self.view_budget_window, text="Budget:", foreground="white", background="gray12")
         self.total_budget_Label.grid(row=0, column=0)
@@ -829,33 +853,84 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.u_budget_but = Tk.Button(self.view_budget_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.update_budget_db)
         self.u_budget_but.grid(row=1, column=1, sticky="e")
         
-    def update_view_tables_window(self, tables, numpeptables):
-        self.view_tables_window = Tk.Toplevel(self, takefocus=True, background="gray12")
-        self.view_tables_window.wm_title("Enter/Update Tables")
-        self.view_tables_window.geometry("200x50")
+    def update_view_tableinfo_window(self, tables, numpeptables):
+        self.view_table_window = Tk.Toplevel(self, takefocus=True, background="gray12")
+        self.view_table_window.wm_title("Enter/Update Tables")
+        self.view_table_window.geometry("250x100")
 
-        self.tables_label = Tk.Label(self.view_tables_window, text="Num Tables:", foreground="white", background="gray12")
-        self.tables_label.grid(row=0, column=0)
-        self.tables_ent = Tk.Entry(self.view_tables_window, highlightbackground="gray12", width=10)
+        self.tables_label = Tk.Label(self.view_table_window, text="Num Tables:", foreground="white", background="gray12")
+        self.tables_label.grid(row=0, column=0, sticky="w")
+        self.tables_ent = Tk.Entry(self.view_table_window, highlightbackground="gray12", width=10)
         self.tables_ent.grid(row=0, column=1, sticky="w")
 
-        self.numpeptable_label = Tk.Label(self.view_tables_window, text="Num Per Table:", foreground="white", background="gray12")
+        self.numpeptable_label = Tk.Label(self.view_table_window, text="Num Per Table:", foreground="white", background="gray12")
         self.numpeptable_label.grid(row=1, column=0)
-        self.numpeptable_ent = Tk.Entry(self.view_tables_window, highlightbackground="gray12", width=10)
+        self.numpeptable_ent = Tk.Entry(self.view_table_window, highlightbackground="gray12", width=10)
         self.numpeptable_ent.grid(row=1, column=1, sticky="w")
 
         self.tables_ent.insert(0, tables)
         self.numpeptable_ent.insert(0, numpeptables)
 
-        self.u_tables_but = Tk.Button(self.view_tables_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_job_db)
-        self.u_tables_but.grid(row=1, column=1, sticky="e")
+        self.u_tables_but = Tk.Button(self.view_table_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.update_tableinfo_db)
+        self.u_tables_but.grid(row=2, column=1, sticky="e")
+
+    def update_view_tables_window(self, ID, people, relationship, family, notes):
+        self.view_tables_window = Tk.Toplevel(self, takefocus=True)
+        self.view_tables_window.wm_title(" " + "Table" + " " + ID)
+        self.view_tables_window.geometry("550x500")
+        self.view_tables_window.attributes('-topmost', 'true')
+            
+        self.tables_toolbar1 = Tk.Frame(self.view_tables_window, bd=1, relief=Tk.RAISED, background="gray25")
+        
+        self.tables_toolbar1.pack(side="top", fill=Tk.X)
+        
+        self.tables_middle_frame = Tk.Frame(self.view_tables_window, background="gray12")
+        self.tables_middle_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        self.tables_bottom_frame = Tk.Frame(self.view_tables_window, background="gray12")
+        self.tables_bottom_frame.pack(expand=1, fill=Tk.BOTH)
+
+        self.relation = Tk.StringVar(self.tables_middle_frame)
+        self.relationship_label = Tk.Label(self.tables_middle_frame, text="Relation:", foreground="white", background="gray12")
+        self.relationship_label.grid(row=0, column=0, sticky="w")
+        self.relationship_listbox = Tk.OptionMenu(self.tables_middle_frame, self.relation, "Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
+        self.relationship_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.relation.set("Friend")
+        self.relationship_listbox.grid(row=0, column=1, sticky="w")
+
+        self.family = Tk.StringVar(self.tables_middle_frame)
+        self.family_label = Tk.Label(self.tables_middle_frame, text="Family:", foreground="white", background="gray12")
+        self.family_label.grid(row=1, column=0, sticky="w")
+        self.family_listbox = Tk.OptionMenu(self.tables_middle_frame, self.family, "None", self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam)
+        self.family_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.family.set("None")
+        self.family_listbox.grid(row=1, column=1, sticky="w")
+
+        self.tables_people_label = (self.tables_middle_frame, text="People:", foreground="white", background="gray12")
+        self.tables_people_label.grid(row=2, column=0, sticky="w")
+        self.tables_people_list = Tk.Listbox(self.tables_middle_frame)
+        self.tables_people_list.grid(row=2, column=2, sticky="w")
+        self.tables_people_list.insert(0, "Bill")
+
+        self.tables_nlabel = Tk.Label(self.tables_bottom_frame, text="Notes:", foreground="white", background="gray12")
+        self.tables_nlabel.pack(side="top", anchor="w")
+        self.tables_ntext = Tk.Text(self.tables_bottom_frame, height=10)
+        self.tables_ntext.pack(expand=1, fill=Tk.BOTH)
+        
+        self.relation.set(relationship)
+        self.family.set(family)
+        self.tables_ntext.insert(Tk.CURRENT, notes)
+
+        #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
+        self.u_tables_but = Tk.Button(self.tables_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_tables_db)
+        self.u_tables_but.pack(side="left")
 
     def update_view_cupfam_window(self, his, her, hisdad, herdad, hismom, hermom):
-        self.view_message_window = Tk.Toplevel(self, takefocus=True)
+        self.view_message_window = Tk.Toplevel(self, takefocus=True, background="gray12")
         self.view_message_window.wm_title("Enter/Update Names & Families")
         self.view_message_window.geometry("465x175")
         
-        self.view_message_main = Tk.Frame(self.view_message_window)
+        self.view_message_main = Tk.Frame(self.view_message_window,background="gray12")
         self.view_message_main.pack(expand=1, fill=Tk.BOTH)
         
         ### Separator Frame ###
@@ -872,41 +947,41 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.bot_sep_bot.grid(row=7, columnspan=5, padx=3, sticky="we")
         
         ### Label for couples Names ###
-        self.his_label = Tk.Label(self.view_message_main, text="His Name:")
-        self.his_label.grid(row=2, column=0, padx=5, sticky="e")
-        self.his_ent = Tk.Entry(self.view_message_main, width=15)
+        self.his_label = Tk.Label(self.view_message_main, text="His Name:", foreground="white", background="gray12")
+        self.his_label.grid(row=2, column=0, padx=5, sticky="w")
+        self.his_ent = Tk.Entry(self.view_message_main, width=15, highlightbackground="gray12")
         self.his_ent.grid(row=2, column=1, sticky="w")
         
-        self.her_label = Tk.Label(self.view_message_main, text="Her Name:")
+        self.her_label = Tk.Label(self.view_message_main, text="Her Name:", foreground="white", background="gray12")
         self.her_label.grid(row=2, column=2, sticky="w")
-        self.her_ent = Tk.Entry(self.view_message_main, width=15)
+        self.her_ent = Tk.Entry(self.view_message_main, width=15, highlightbackground="gray12")
         self.her_ent.grid(row=2, column=3, padx=5, sticky="w")
         
         ### Separator Frame Labels ###
-        self.top_label = Tk.Label(self.view_message_main, font=("Helvetica", 16, "bold italic"), text="Couple's Names")
+        self.top_label = Tk.Label(self.view_message_main, font=("Helvetica", 16, "bold italic"), text="Couple's Names", foreground="white", background="gray12")
         self.top_label.grid(row=0, column=1, stick="w")
         
-        self.bot_label = Tk.Label(self.view_message_main, font=("Helvetica", 16, "bold italic"), text="Family Names")
+        self.bot_label = Tk.Label(self.view_message_main, font=("Helvetica", 16, "bold italic"), text="Family Names", foreground="white", background="gray12")
         self.bot_label.grid(row=4, column=1, sticky="w")
 
-        self.his_dadside = Tk.Label(self.view_message_main, text="His Dad's:")
-        self.his_dadside.grid(row=5, column=0, padx=5, sticky="e")
-        self.his_dadside_ent = Tk.Entry(self.view_message_main, width=15)
+        self.his_dadside = Tk.Label(self.view_message_main, text="His Dad's:", foreground="white", background="gray12")
+        self.his_dadside.grid(row=5, column=0, padx=5, sticky="w")
+        self.his_dadside_ent = Tk.Entry(self.view_message_main, width=15, highlightbackground="gray12")
         self.his_dadside_ent.grid(row=5, column=1, sticky="w")
         
-        self.her_dadside = Tk.Label(self.view_message_main, text="Her Dad's:")
+        self.her_dadside = Tk.Label(self.view_message_main, text="Her Dad's:", foreground="white", background="gray12")
         self.her_dadside.grid(row=5, column=2, sticky="w")
-        self.her_dadside_ent = Tk.Entry(self.view_message_main, width=15)
+        self.her_dadside_ent = Tk.Entry(self.view_message_main, width=15, highlightbackground="gray12")
         self.her_dadside_ent.grid(row=5, column=3, padx=5, sticky="w")
         
-        self.his_momside = Tk.Label(self.view_message_main, text="His Mom's:")
+        self.his_momside = Tk.Label(self.view_message_main, text="His Mom's:", foreground="white", background="gray12")
         self.his_momside.grid(row=6, column=0, sticky="e")
-        self.his_momside_ent = Tk.Entry(self.view_message_main, width=15)
+        self.his_momside_ent = Tk.Entry(self.view_message_main, width=15, highlightbackground="gray12")
         self.his_momside_ent.grid(row=6, column=1, sticky="w")
 
-        self.her_momside = Tk.Label(self.view_message_main, text="Her Mom's:")
+        self.her_momside = Tk.Label(self.view_message_main, text="Her Mom's:", foreground="white", background="gray12")
         self.her_momside.grid(row=6, column=2, sticky="w")
-        self.her_momside_ent = Tk.Entry(self.view_message_main, width=15)
+        self.her_momside_ent = Tk.Entry(self.view_message_main, width=15, highlightbackground="gray12")
         self.her_momside_ent.grid(row=6, column=3, padx=5, sticky="w")
 
         ### Update Enteries
@@ -917,7 +992,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.his_momside_ent.insert(0, hismom)
         self.her_momside_ent.insert(0, hermom)
         
-        self.view_cupfamily_b = Tk.Button(self.view_message_main, text="Submit", command=self.update_cupfam_db)
+        self.view_cupfamily_b = Tk.Button(self.view_message_main, text="Submit", command=self.update_cupfam_db, highlightbackground="gray12")
         self.view_cupfamily_b.grid(row=8, column=3, sticky="e")
         self.view_message_window.attributes('-topmost', 'true')  # Bring the message window on top
 
@@ -978,7 +1053,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     
                     self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7], info[8])
             except:
-                pass     
+                try:
+
+                except:
+                    pass     
         
     def save_person_db(self):
         var_n = self.n_ent.get() # Get firstname
@@ -1087,13 +1165,25 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             pass
 
     def update_budget_db(self):
-        view_bugdet = self.total_budget_ent.get()
+        view_bugdet = self.total_budget_ent.get() # Get budget value
 
         sql = "UPDATE budget SET budget=(?)"
         res= self.cursor.execute(sql, (view_bugdet,))
         self.conn.commit()
 
         self.load_budget_data()
+
+    def update_tableinfo_db(self):
+        view_tables = self.tables_ent.get() # Get number of tables
+        view_numpeptable = self.numpeptable_ent.get() # Get number of people at table
+
+        sql = "UPDATE tableinfo SET numtables=(?), numpeptable=(?)"
+        res= self.cursor.execute(sql, (view_tables, view_numpeptable))
+        self.conn.commit()
+
+        self.load_table_data()
+
+    def update_tables_db(self):
 
     def update_total_cost_db(self):
         # Reset cost so same items don't get added more than once
@@ -1180,7 +1270,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             
             self.sear_win_sear_label = Tk.Label(self.search_win_frame, text="Search:", font=("Arial", 11), foreground="white", background="black", pady=2)
             self.sear_win_sear_label.pack(side="left")
-            self.sear_win_sear = Tk.Entry(self.search_win_frame)
+            self.sear_win_sear = Tk.Entry(self.search_win_frame, highlightbackground="black")
             self.sear_win_sear.pack(anchor="w", fill=Tk.X, pady=2)
             self.sear_win_sear.bind("<Return>", lambda event, arg=self.sear_win_sear: self.search_db(event, arg))
             
