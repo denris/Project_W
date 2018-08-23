@@ -49,7 +49,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
             self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, description text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
                                 importance text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
-            self.cursor.execute("""CREATE TABLE tables(ID integer PRIMARY KEY AUTOINCREMENT, people text, remaining int, relationship text, family text, notes text)""")
+            self.cursor.execute("""CREATE TABLE tables(people text, remaining int, relationship text, family text, notes text)""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
             self.cursor.execute("""CREATE TABLE tableinfo(numtables int, numpeptable int)""")
@@ -407,28 +407,28 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         for row in res:
             self.number = row[0]
-            print row[0]
         
         if self.number == self.tables:
             pass
         elif self.number > self.tables:
             for row in range((self.number - self.tables)):
-                sql = "DELETE FROM tables WHERE ID = (SELECT MAX(ID) FROM tables)"
+                sql = "DELETE FROM tables WHERE rowid = (SELECT MAX(rowid) FROM tables)"
                 res = self.cursor.execute(sql)
                 self.conn.commit()
         else:
             for row in range((self.tables - self.number)):
                 sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
-                res = self.cursor.execute(sql, ("","","","",""))
+                res = self.cursor.execute(sql, ("", 0, "Our Friend", "None", ""))
                 self.conn.commit()
         
-        sql = "Select * from tables"
+        sql = "Select rowid, people, remaining, relationship, family, notes from tables"
         res = self.cursor.execute(sql)
         self.conn.commit()
         
         for row in res:
+            
             try:
-                self.all_tables.insert('', 'end', tags=[], values=[row,])
+                self.all_tables.insert('', 'end', tags=[], values=[row[0]])
             except:    
                 pass
     
@@ -906,7 +906,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def update_view_tables_window(self, ID, people, relationship, family, notes):
         self.view_tables_window = Tk.Toplevel(self, takefocus=True)
-        self.view_tables_window.wm_title(" " + "Table" + " " + ID)
+        self.view_tables_window.wm_title(" " + "Table" + " " + str(ID))
         self.view_tables_window.geometry("550x500")
         self.view_tables_window.attributes('-topmost', 'true')
             
@@ -930,17 +930,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.family = Tk.StringVar(self.tables_middle_frame)
         self.family_label = Tk.Label(self.tables_middle_frame, text="Family:", foreground="white", background="gray12")
-        self.family_label.grid(row=1, column=0, sticky="w")
+        self.family_label.grid(row=0, column=3, sticky="w")
         self.family_listbox = Tk.OptionMenu(self.tables_middle_frame, self.family, "None", self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam)
         self.family_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.family.set("None")
-        self.family_listbox.grid(row=1, column=1, sticky="w")
+        self.family_listbox.grid(row=0, column=4, sticky="w")
 
         self.tables_people_label = Tk.Label(self.tables_middle_frame, text="People:", foreground="white", background="gray12")
-        self.tables_people_label.grid(row=2, column=0, sticky="w")
+        self.tables_people_label.grid(row=1, column=0, sticky="w")
         self.tables_people_list = Tk.Listbox(self.tables_middle_frame)
-        self.tables_people_list.grid(row=2, column=2, sticky="w")
-        self.tables_people_list.insert(0, "Bill")
+        self.tables_people_list.grid(row=1, column=1, sticky="w")
+        
 
         self.tables_nlabel = Tk.Label(self.tables_bottom_frame, text="Notes:", foreground="white", background="gray12")
         self.tables_nlabel.pack(side="top", anchor="w")
@@ -950,7 +950,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relation.set(relationship)
         self.family.set(family)
         self.tables_ntext.insert(Tk.CURRENT, notes)
-
+        #self.tables_people_list.insert(0, "Bill")
+        
         #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
         self.u_tables_but = Tk.Button(self.tables_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_tables_db)
         self.u_tables_but.pack(side="left")
@@ -1083,29 +1084,23 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     
                     self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7], info[8])
             except:
-                try:
-                    selection = tree.item(tree.selection())['values'][0]
-                    #selection1 = tree.item(tree.selection())['values'][1]
+                
+                selection = tree.item(tree.selection())['values'][0]
+                #selection1 = tree.item(tree.selection())['values'][1]
+                self.tablerowid = selection
+                sql = "SELECT * FROM tables WHERE rowid=(?)"
+                view = self.cursor.execute(sql, (selection,))
+                self.conn.commit()
+                
 
-                    sql = "SELECT ID FROM tables WHERE ID=(?)"
-                    self.tablerowid = self.cursor.execute(sql, (selection,))
-                    self.conn.commit()
-                    sql = "SELECT * FROM tables WHERE ID=(?)"
-                    for row in self.tablerowid:
-                        self.tablerowid = row
-                    view = self.cursor.execute(sql, (self.tablerowid))
-                    self.conn.commit()
-
-                    for info in view:
-                        people = info[1]
-                        relationship = info[3]
-                        family = info[4]
-                        notes = info[5]
-
+                for info in view:
+                    people = info[0]
+                    relationship = info[2]
+                    family = info[3]
+                    notes = info[4]
 
                     self.update_view_tables_window(self.tablerowid, people, relationship, family, notes)
-                except:
-                    pass     
+                   
         
     def save_person_db(self):
         var_n = self.n_ent.get() # Get firstname
@@ -1233,7 +1228,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_table_data()
 
     def update_tables_db(self):
-        pass
+        view_relationship = self.relation.get()
+        view_family = self.family.get()
+        view_people = self.tables_people_list.get(0, Tk.END)
+        view_table_notes = self.tables_ntext.get("1.0", Tk.END)
+
+        sql = "UPDATE tables SET relationship=(?), family=(?), people=(?), notes=(?) WHERE rowid=(?)"
+        res = self.cursor.execute(sql, (view_relationship, view_family, view_people, view_table_notes, self.tablerowid))
+        self.conn.commit()
+
+        self.load_table_data()
+
     def update_total_cost_db(self):
         # Reset cost so same items don't get added more than once
         self.total_cost = 0.00
