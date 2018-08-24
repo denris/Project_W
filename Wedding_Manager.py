@@ -418,7 +418,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         else:
             for row in range((self.tables - self.number)):
                 sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
-                res = self.cursor.execute(sql, ("", self.table_num_pep, "", "", ""))
+                res = self.cursor.execute(sql, ("", self.table_num_pep, "", "None", ""))
                 self.conn.commit()
         
         sql = "Select rowid, people, remaining, relationship, family, notes from tables"
@@ -1246,7 +1246,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         view_family = self.family.get()
         view_people = self.tables_people_list.get(0, Tk.END)
         view_table_notes = self.tables_ntext.get("1.0", Tk.END)
-
         view_people = ",".join(view_people)
         
         sql = "UPDATE tables SET relationship=(?), family=(?), people=(?), notes=(?) WHERE rowid=(?)"
