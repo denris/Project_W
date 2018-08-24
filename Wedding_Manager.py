@@ -483,7 +483,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.person_window = Tk.Toplevel(self, background="gray12")
         self.person_window.wm_title("Add Person")
         self.person_window.geometry("550x500")
-                    
+
         self.toolbar1 = Tk.Frame(self.person_window, bd=1, relief=Tk.RAISED, background="gray25")
         
         self.toolbar1.pack(side="top", fill=Tk.X)
@@ -555,9 +555,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.table = Tk.StringVar(self.middle_frame)
         self.tablenum_label = Tk.Label(self.middle_frame, text="Table:", foreground="white", background="gray12")
         self.tablenum_label.grid(row=5, column=1, sticky="e")
-        self.tablenum_box = Tk.OptionMenu(self.middle_frame, self.table, 1, 2)
+        
+        table_list = []
+        [table_list.append(i) for i in range(1, self.tables + 1)]
+
+        self.tablenum_box = Tk.OptionMenu(self.middle_frame, self.table, 0, *table_list)
         self.tablenum_box.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
-        self.table.set(100)
+        self.table.set(0)
         self.tablenum_box.grid(row=5, column=2, sticky="w")
         
         self.status = Tk.StringVar(self.middle_frame)
@@ -709,9 +713,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relation = Tk.StringVar(self.middle_frame)
         self.relationship_label = Tk.Label(self.middle_frame, text="Relation:", foreground="white", background="gray12")
         self.relationship_label.grid(row=4, column=0, sticky="w")
-        self.relationship_listbox = Tk.OptionMenu(self.middle_frame, self.relation, "Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
+        self.relationship_listbox = Tk.OptionMenu(self.middle_frame, self.relation, "Our Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
         self.relationship_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
-        self.relation.set("Friend")
+        self.relation.set("Our Friend")
         self.relationship_listbox.grid(row=4, column=1, sticky="w")
         
         self.family = Tk.StringVar(self.middle_frame)
@@ -747,9 +751,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.table = Tk.StringVar(self.middle_frame)
         self.tablenum_label = Tk.Label(self.middle_frame, text="Table:", foreground="white", background="gray12")
         self.tablenum_label.grid(row=5, column=1, sticky="e")
-        self.tablenum_box = Tk.OptionMenu(self.middle_frame, self.table, 1, 2)
+        
+        table_list = []
+        [table_list.append(i) for i in range(1, self.tables + 1)]
+
+        self.tablenum_box = Tk.OptionMenu(self.middle_frame, self.table, 0, *table_list)
         self.tablenum_box.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
-        self.table.set(100)
+        self.table.set(0)
         self.tablenum_box.grid(row=5, column=2, sticky="w")
         
         self.status = Tk.StringVar(self.middle_frame)
@@ -923,9 +931,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relation = Tk.StringVar(self.tables_middle_frame)
         self.relationship_label = Tk.Label(self.tables_middle_frame, text="Relation:", foreground="white", background="gray12")
         self.relationship_label.grid(row=0, column=0, sticky="w")
-        self.relationship_listbox = Tk.OptionMenu(self.tables_middle_frame, self.relation, "Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
+        self.relationship_listbox = Tk.OptionMenu(self.tables_middle_frame, self.relation, "Our Friend", "Cousin", "Aunt", "Uncle", "Aunt & Uncle", "His " + "Friend")
         self.relationship_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
-        self.relation.set("Friend")
+        self.relation.set("Our Friend")
         self.relationship_listbox.grid(row=0, column=1, sticky="w")
 
         self.family = Tk.StringVar(self.tables_middle_frame)
@@ -937,7 +945,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_listbox.grid(row=0, column=4, sticky="w")
 
         self.tables_people_label = Tk.Label(self.tables_middle_frame, text="People:", foreground="white", background="gray12")
-        self.tables_people_label.grid(row=1, column=0, sticky="w")
+        self.tables_people_label.grid(row=1, column=0, sticky="nw")
         self.tables_people_list = Tk.Listbox(self.tables_middle_frame)
         self.tables_people_list.grid(row=1, column=1, sticky="w")
         
@@ -950,7 +958,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.relation.set(relationship)
         self.family.set(family)
         self.tables_ntext.insert(Tk.CURRENT, notes)
-        #self.tables_people_list.insert(0, "Bill")
+        
+        sql = "SELECT firstname, lastname FROM people WHERE tablenumber=(?)"
+        res = self.cursor.execute(sql, (ID,))
+        self.conn.commit()
+        
+        for row in res:
+            self.tables_people_list.insert(0, row[0] + " " + row[1])
         
         #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
         self.u_tables_but = Tk.Button(self.tables_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_tables_db)
@@ -1233,6 +1247,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         view_people = self.tables_people_list.get(0, Tk.END)
         view_table_notes = self.tables_ntext.get("1.0", Tk.END)
 
+        view_people = ",".join(view_people)
+        
         sql = "UPDATE tables SET relationship=(?), family=(?), people=(?), notes=(?) WHERE rowid=(?)"
         res = self.cursor.execute(sql, (view_relationship, view_family, view_people, view_table_notes, self.tablerowid))
         self.conn.commit()
