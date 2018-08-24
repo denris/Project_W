@@ -418,7 +418,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         else:
             for row in range((self.tables - self.number)):
                 sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
-                res = self.cursor.execute(sql, ("", 0, "Our Friend", "None", ""))
+                res = self.cursor.execute(sql, ("", self.table_num_pep, "", "", ""))
                 self.conn.commit()
         
         sql = "Select rowid, people, remaining, relationship, family, notes from tables"
@@ -428,7 +428,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for row in res:
             
             try:
-                self.all_tables.insert('', 'end', tags=[], values=[row[0]])
+                self.all_tables.insert('', 'end', tags=[], values=[row[0], row[1], row[2], row[3], row[4]])
             except:    
                 pass
     
