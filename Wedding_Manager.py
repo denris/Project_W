@@ -1209,17 +1209,18 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for row in res:
             name = update_n + " " + update_ln + ", "
             old_table = row[1]
-            if name in row and var_tablenum != 0 and var_tablenum != old_table:
+            if name in row and update_tablenum != 0 and update_tablenum != old_table:
                 sql = "SELECT people FROM tables WHERE rowid=(?)"
-                res = self.cursor.execute(sql, (var_tablenum,))
+                res = self.cursor.execute(sql, (update_tablenum,))
                 self.conn.commit()
                 for row in res:
                     if len(row[0]) == 0:
-                    sql = "UPDATE tables SET people=(?) WHERE rowid=(?)"
-                    new_res = self.cursor.execute(sql, (, var_tablenum))
+                        update_people = update_n + " " + update_ln + ", "
+                        sql = "UPDATE tables SET people=(?) WHERE rowid=(?)"
+                        new_res = self.cursor.execute(sql, (update_people, update_tablenum))
                 sql = "UPDATE tables SET people=(?) WHERE rowid=(?)"
                 old_res = self.cursor.execute(sql, (, old_table))
-                print row[0]
+                    
                 
         
         # if update_tablenum != 0:
