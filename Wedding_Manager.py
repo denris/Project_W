@@ -1139,15 +1139,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             res = self.cursor.execute(sql, (var_tablenum,))
             self.conn.commit()
             for row in res:
-                if len(row[0]) == 0:
+                old_people = row[0]
+                old_remaining = row[1]
+                if len(old_people) == 0:
                     var_people = var_n + " " + var_ln + ", "
-                    var_remaining = row[1] - int(var_numofpep)
+                    var_remaining = old_remaining - int(var_numofpep)
                     sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
                     res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
                     self.conn.commit()
                 else:
-                    var_people = row[0] + var_n + " " + var_ln + ", "
-                    var_remaining = row[1] - int(var_numofpep)
+                    var_people = old_people + var_n + " " + var_ln + ", "
+                    var_remaining = old_remaining - int(var_numofpep)
                     sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
                     res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
                     self.conn.commit()
@@ -1213,26 +1215,29 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             old_remaining = row[2]
             
             
+            
             if name in row and update_tablenum != 0 and update_tablenum != old_table:
-                print "First Worked"
-                sql = "SELECT people FROM tables WHERE rowid=(?)"
+                sql = "SELECT people,remaining FROM tables WHERE rowid=(?)"
                 res = self.cursor.execute(sql, (update_tablenum,))
                 self.conn.commit()
                 
                 for row in res:
                     new_table = row[0]
-                    if len(new_table) == 0:
+                    new_table_list = new_table.split(", ")
+                    new_remaining = row[1]
+                    if len(new_table_list) == 1:
                         update_people = update_n + " " + update_ln + ", "
                         update_remaining = self.table_num_pep - int(update_numofpep)
                         sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                        new_res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
-                        
+                        res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                        self.conn.commit()
+                        print "Wrong"
                         # Remove from old table
                         update_people = old_people.split(", ")
-                        print update_people
                         update_people = update_people.remove(update_n + " " + update_ln)
-                        if update_people > 0:
-                            update_people.join(", ")
+                        
+                        if update_people != None:
+                            update_people = ", ".join(update_people)
                         else:
                             update_people = ""
                         update_remaining = old_remaining + int(update_numofpep)
@@ -1240,52 +1245,58 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
                         res = self.cursor.execute(sql, (update_people, update_remaining, old_table))
                         self.conn.commit()
-                        print "Worked"
-                    else:
+                        
+                    elif len(new_table_list) > 1:
                         # Add to new table
-                        update_people = ", " + new_table + update_n + " " + update_ln 
-                        update_remaining = old_remaining + int(update_numofpep)
+                        update_people = new_table + update_n + " " + update_ln + ", "
+                        print update_people
+                        update_remaining = new_remaining - int(update_numofpep)
                         sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
                         res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
                         self.conn.commit()
-
                         # Remove from old table
                         update_people = old_people.split(", ")
+                        print "Right"
                         update_people = update_people.remove(update_n + " " + update_ln)
-                        update_people.join(", ")
+                        print update_people
+                        if update_people != None:
+                            update_people = ", ".join(update_people)
+                        else:
+                            update_people = ""
+                        
                         update_remaining = old_remaining + int(update_numofpep)
                         sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
                         res = self.cursor.execute(sql, (update_people, update_remaining, old_table))
                         
                         self.conn.commit()
+                    else:
+                        print "Didn't do anything"
+            # elif:
+            #     print "Right"
+            #     if update_tablenum != 0:
+            #         sql = "SELECT people, remaining FROM tables WHERE rowid=(?)"
+            #         res = self.cursor.execute(sql, (update_tablenum,))
+            #         self.conn.commit()
+            #         for row in res:
+            #             old_people = row[0]
+            #             old_people_list = old_people.split(", ")
+            #             old_remaining = row[1]
+            #             if len(old_people_list) == 0:
+            #                 update_people = update_n + " " + update_ln + ", "
+            #                 update_remaining = old_remaining - int(update_numofpep)
+            #                 sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+            #                 res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+            #                 self.conn.commit()
+            #             else:
+            #                 update_people = old_people + update_n + " " + update_ln + ", "
+            #                 update_remaining = old_remaining - int(update_numofpep)
+            #                 sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+            #                 res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+            #                 self.conn.commit()
             # else:
-            #     if len(row[0]) == 0:
-            #         var_people = var_n + " " + var_ln + ", "
-            #         var_remaining = self.table_num_pep - int(var_numofpep)
-            #         sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-            #         res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
-            #         self.conn.commit()
-            #     else:
-            #         var_people = row[0] + ", " + var_n + " " + var_ln
-            #         var_remaining = self.table_num_pep - int(var_numofpep)
-            #         sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-            #         res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
-            #         self.conn.commit()
-        self.load_table_data()
-                
-                # sql = "UPDATE tables SET people=(?) WHERE rowid=(?)"
-                # old_res = self.cursor.execute(sql, (, old_table))
-                    
-                
+            #     pass
         
-        # if update_tablenum != 0:
-            
-        #     var_people = row[0] + "," + var_n + " " + var_ln
-        #     var_remaining = self.table_num_pep - len(var_people.split(","))
-        #     sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-        #     res = self.cursor.execute(sql, (var_people, var_remaining, update_tablenum))
-        #     self.conn.commit()
-        # self.load_table_data()
+        self.load_table_data()
 
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
