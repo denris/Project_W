@@ -1135,19 +1135,19 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
         
         if var_tablenum != 0:
-            sql = "SELECT people FROM tables WHERE rowid=(?)"
+            sql = "SELECT people, remaining FROM tables WHERE rowid=(?)"
             res = self.cursor.execute(sql, (var_tablenum,))
             self.conn.commit()
             for row in res:
                 if len(row[0]) == 0:
                     var_people = var_n + " " + var_ln + ", "
-                    var_remaining = self.table_num_pep - int(var_numofpep)
+                    var_remaining = row[1] - int(var_numofpep)
                     sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
                     res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
                     self.conn.commit()
                 else:
                     var_people = row[0] + var_n + " " + var_ln + ", "
-                    var_remaining = self.table_num_pep - int(var_numofpep)
+                    var_remaining = row[1] - int(var_numofpep)
                     sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
                     res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
                     self.conn.commit()
@@ -1208,6 +1208,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
         for row in res:
             name = update_n + " " + update_ln + ", "
+            old_people = row[0]
             old_table = row[1]
             old_remaining = row[2]
             
@@ -1227,9 +1228,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         new_res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
                         
                         # Remove from old table
-                        update_people = old_table.split(", ")
+                        update_people = old_people.split(", ")
+                        print update_people
                         update_people = update_people.remove(update_n + " " + update_ln)
-                        update_people.join(", ")
+                        if update_people > 0:
+                            update_people.join(", ")
+                        else:
+                            update_people = ""
                         update_remaining = old_remaining + int(update_numofpep)
                         
                         sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
@@ -1238,14 +1243,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         print "Worked"
                     else:
                         # Add to new table
-                        update_people = new_table + update_n + " " + update_ln + ", "
+                        update_people = ", " + new_table + update_n + " " + update_ln 
                         update_remaining = old_remaining + int(update_numofpep)
                         sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
                         res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
                         self.conn.commit()
 
                         # Remove from old table
-                        update_people = old_table.split(", ")
+                        update_people = old_people.split(", ")
                         update_people = update_people.remove(update_n + " " + update_ln)
                         update_people.join(", ")
                         update_remaining = old_remaining + int(update_numofpep)
