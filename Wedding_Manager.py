@@ -1212,15 +1212,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             name = update_n + " " + update_ln + ", "
             old_people = row[0]
             old_table = row[1]
+            print old_table
+            print row
             old_remaining = row[2]
             
-            
+            print old_people.split(", ")
             
             if name in row and update_tablenum != 0 and update_tablenum != old_table:
                 sql = "SELECT people,remaining FROM tables WHERE rowid=(?)"
                 res = self.cursor.execute(sql, (update_tablenum,))
                 self.conn.commit()
-                
+                print "We came here"
                 for row in res:
                     new_table = row[0]
                     new_table_list = new_table.split(", ")
@@ -1271,6 +1273,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         self.conn.commit()
                     else:
                         print "Didn't do anything"
+            else:
+                print "Did not meat condition"
             # elif:
             #     print "Right"
             #     if update_tablenum != 0:
