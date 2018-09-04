@@ -28,6 +28,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.jobs = []
         self.tables = 0
         self.table_num_pep = 0
+        self.old_table_num_pep = self.table_num_pep
         self.stores = []
         self.total_cost = 0.00
         self.str_total_cost = "0.00"
@@ -408,13 +409,50 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for row in res:
             self.number = row[0]
         
-        if self.number == self.tables:
-            pass
+        if self.number == self.tables and self.old_table_num_pep > 0:
+            sql = "SELECT remaining FROM tables"
+            res = self.cursor.execute(sql)
+            for row in res:
+                old_remaining = row[0]
+                
+                print old_remaining
+                sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
+                
+                if self.old_table_num_pep > self.table_num_pep:
+                    update_remaining = old_remaining - (self.old_table_num_pep - self.table_num_pep)
+                    res = self.cursor.execute(sql, (update_remaining, self.old_table_num_pep))
+                    self.conn.commit()
+                elif self.old_table_num_pep < self.table_num_pep:
+                    update_remaining = old_remaining + (self.table_num_pep - self.old_table_num_pep)
+                    res = self.cursor.execute(sql, (update_remaining, self.old_table_num_pep))
+                    self.conn.commit()
+                else:
+                    pass
+                
+
         elif self.number > self.tables:
             for row in range((self.number - self.tables)):
                 sql = "DELETE FROM tables WHERE rowid = (SELECT MAX(rowid) FROM tables)"
                 res = self.cursor.execute(sql)
                 self.conn.commit()
+                
+            sql = "SELECT remaining FROM tables"
+            res = self.cursor.execute(sql)
+            for row in res:
+                old_remaining = row[0]
+                print old_remaining
+                sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                
+                if self.old_table_num_pep > self.table_num_pep:
+                    update_remaining = old_remaining - (self.old_table_num_pep - self.table_num_pep)
+                    res = self.cursor.execute(sql, (update_remaining, self.old_table_num_pep))
+                    self.conn.commit()
+                elif self.old_table_num_pep < self.table_num_pep:
+                    update_remaining = old_remaining + (self.table_num_pep - self.old_table_num_pep)
+                    res = self.cursor.execute(sql, (update_remaining, self.old_table_num_pep))
+                    self.conn.commit()
+                else:
+                    pass
         else:
             for row in range((self.tables - self.number)):
                 sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
@@ -1351,6 +1389,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def update_tableinfo_db(self):
         view_tables = self.tables_ent.get() # Get number of tables
         view_numpeptable = self.numpeptable_ent.get() # Get number of people at table
+
+        sql = "SELECT numpeptable FROM tableinfo"
+        res = self.cursor.execute(sql)
+        for row in res:
+            self.old_table_num_pep = row[0]
 
         sql = "UPDATE tableinfo SET numtables=(?), numpeptable=(?)"
         res= self.cursor.execute(sql, (view_tables, view_numpeptable))
