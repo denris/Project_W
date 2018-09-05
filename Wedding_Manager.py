@@ -1124,15 +1124,21 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 if len(old_people) == 0:
                     var_people = var_n + " " + var_ln
                     var_remaining = old_remaining - int(var_numofpep)
-                    sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                    res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
-                    self.conn.commit()
+                    if var_remaining >= 0 and var_remaining <= self.table_num_pep:
+                        sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                        res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
+                        self.conn.commit()
+                    else:
+                        tkMessageBox.showerror("Error","Could not update Table " + var_tablenum)
                 else:
                     var_people = old_people + ", " + var_n + " " + var_ln
                     var_remaining = old_remaining - int(var_numofpep)
-                    sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                    res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
-                    self.conn.commit()
+                    if var_remaining >= 0 and var_remaining <= self.table_num_pep:
+                        sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                        res = self.cursor.execute(sql, (var_people, var_remaining, var_tablenum))
+                        self.conn.commit()
+                    else:
+                        tkMessageBox.showerror("Error","Could not update Table " + var_tablenum)
             self.load_tables_data()
             
         # Update People Tree
