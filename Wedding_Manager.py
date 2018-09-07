@@ -216,7 +216,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.load_budget_data()
         self.load_job_data()
-        self.load_table_data()
+        self.load_tables_data()
         self.load_cupfam_data()
         self.load_item_data()
         self.load_people_data()
@@ -1224,12 +1224,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 
 
         elif self.number > self.tables:
-            print "less tables"
-            for row in range((self.number - self.tables)):
-                sql = "DELETE FROM tables WHERE rowid = (SELECT MAX(rowid) FROM tables)"
-                res = self.cursor.execute(sql)
-                self.conn.commit()
-            
             ### Dynamic update if number tables decrease and number at table change
             sql = "SELECT remaining FROM tables"
             res = self.cursor.execute(sql)
@@ -1261,44 +1255,52 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     self.conn.commit()
                 else:
                     pass
+            print "less tables"
+            for row in range((self.number - self.tables)):
+                sql = "DELETE FROM tables WHERE rowid = (SELECT MAX(rowid) FROM tables)"
+                res = self.cursor.execute(sql)
+                self.conn.commit()
+            
+           
         else:
+            ### Dynamic update if number tables increase and number at table change
+            sql = "SELECT remaining FROM tables"
+            res = self.cursor.execute(sql)
+            for row in res:
+                old_remaining = row[0]
+                
+                sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
+                res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
+                self.conn.commit()
+            
+            
+            different = {}
+            sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
+            res = self.cursor.execute(sql, (self.table_num_pep,))
+            for row in res:
+                different[row[1]] = row[0]
+                
+                
+            for key, value in different.iteritems():
+                if self.old_table_num_pep > self.table_num_pep:
+                    sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                    update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
+                    res = self.cursor.execute(sql, (update_remaining, key))
+                    self.conn.commit()
+                elif self.old_table_num_pep < self.table_num_pep:
+                    sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                    update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
+                    res = self.cursor.execute(sql, (update_remaining, key))
+                    self.conn.commit()
+                else:
+                    pass
             print "more tables"
             for row in range((self.tables - self.number)):
                 sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
                 res = self.cursor.execute(sql, ("", self.table_num_pep, "", "None", ""))
                 self.conn.commit()
 
-                 ### Dynamic update if number tables increase and number at table change
-                sql = "SELECT remaining FROM tables"
-                res = self.cursor.execute(sql)
-                for row in res:
-                    old_remaining = row[0]
-                    
-                    sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
-                    res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
-                    self.conn.commit()
                 
-                
-                different = {}
-                sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
-                res = self.cursor.execute(sql, (self.table_num_pep,))
-                for row in res:
-                    different[row[1]] = row[0]
-                    
-                    
-                for key, value in different.iteritems():
-                    if self.old_table_num_pep > self.table_num_pep:
-                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
-                        update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
-                        res = self.cursor.execute(sql, (update_remaining, key))
-                        self.conn.commit()
-                    elif self.old_table_num_pep < self.table_num_pep:
-                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
-                        update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
-                        res = self.cursor.execute(sql, (update_remaining, key))
-                        self.conn.commit()
-                    else:
-                        pass
         ### Reload Data
         self.load_tables_data()
 
