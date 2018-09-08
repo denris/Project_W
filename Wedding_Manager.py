@@ -174,7 +174,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         #=============================Bridle Party====================================================================
         self.bp_tab = ttk.Frame(self.tabControl)            # Create a tab 
-        self.tabControl.add(self.bp_tab, text='Bridle Party')      # Add the tab
+        self.tabControl.add(self.bp_tab, text='Bridal Party')      # Add the tab
         self.bp_columns = ttk.Frame(self.bp_tab)
 
         self.bp_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
