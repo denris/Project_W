@@ -75,9 +75,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.conn.commit()
 
             ### Init Jobs
-            sql = "INSERT INTO jobs (job) VALUES (?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?)"
-            res = self.cursor.execute(sql, ("None", "Best Man", "Maid of Honor", "Bridesmaid", "Groomsman", "Bridle Table Server", "Server", "Cleanup", "Devotional", "Guest Register", \
-                                           "Gift Receiver", "Usher", "Master of Ceremony", "Photographer", "Prayer For Meal", "Welcome And Prayer", "Sermon", "Singer", "Vows",))
+            sql = "INSERT INTO jobs (job) VALUES (?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?),(?)"
+            res = self.cursor.execute(sql, ("None", "Best Man", "Maid of Honor", "Bridesmaid", "Groomsman", "Bridal Table Servers", "Family Table Servers", "Guest Servers", "Appetizer Servers", "Cleanup", "Dishwashers", "Devotional", "Guest Registrars", \
+                                           "Gift Receivers", "Congregational Songs", "Ceremony Ushers", "Master of Ceremonies", "Photography", "Florists", "Cooks", "Prayer For Meal", "Welcome And Prayer", "Meditation", "Vocalists", "Exchange of Vows", \
+                                           "Program Attendants", "Ceremony Coordinators", "Reception Coordinators", "Host & Hostess"))
             self.conn.commit()
 
             ### Init Tables
@@ -213,6 +214,33 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.all_tables = ttk.Treeview(columns=self.table_dataCols, show= 'headings')
         self.create_columns(self.table_dataCols, self.table_columns, self.all_tables)
+
+        #============================== Order of Service Tab =============================================================
+        self.oos_tab = ttk.Frame(self.tabControl)
+        self.tabControl.add(self.oos_tab, text='Order of Service')
+        self.ceremon_text = Tk.Text(self.oos_tab, font=("Arial", 18))
+        self.ceremon_text.pack(fill=Tk.BOTH)
+
+        formatted_jobs = ["Welcome And Prayer", "Congregational Songs", "Devotional", "Meditation", "Exchange of Vows", "Maid of Honor", "Best Man", "Bridesmaid", "Groomsman", \
+                          "Ceremony Coordinators", "Ceremony Ushers", "Vocalists", "Guest Registrars", "Program Attendants", "Gift Receivers", "Reception Coordinators", "Master of Ceremonies", \
+                          "Prayer For Meal", "Host & Hostess", "Bridal Table Servers", "Family Table Servers", "Guest Servers", "Appetizer Servers", "Cooks", "Dishwashers", "Cleanup", "Florists", "Photography"]
+        
+        for i in formatted_jobs:
+            sql = "SELECT firstname,lastname,job FROM people WHERE job=(?)"
+            res = self.cursor.execute(sql, (i,))
+                
+            for row in res:
+                self.ceremon_text.insert(Tk.END, row[2] + ' - ' + row[0] + ' ' + row[1] + "\n") 
+                print row[2] + ' - ' + row[0] + ' ' + row[1]
+    
+        #============================== Ceremony Tab =============================================================
+        self.ceremony_tab = ttk.Frame(self.tabControl)
+        self.tabControl.add(self.ceremony_tab, text='Ceremony')
+
+        #============================== Reception Tab =============================================================
+        self.reception_tab = ttk.Frame(self.tabControl)
+        self.tabControl.add(self.reception_tab, text='Reception')
+
 
         self.load_budget_data()
         self.load_job_data()
@@ -1111,7 +1139,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         var_tablenum = self.table.get()
         var_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
-        if var_tablenum == 0:
+        if int(var_tablenum) == 0:
             sql = "INSERT INTO people (firstname, lastname, address, phone, relationship, family, bibleschool, numberofpeople, status, job, tablenumber, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
             res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_bibleschool, var_numofpep, var_status, var_job, var_tablenum, var_notes))
             self.conn.commit()
@@ -1125,7 +1153,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 if len(old_people) == 0:
                     var_people = var_n + " " + var_ln
                     var_remaining = old_remaining - int(var_numofpep)
-                    if var_remaining >= 0 and var_remaining <= self.table_num_pep:
+                    if int(var_remaining) >= 0 and int(var_remaining) <= self.table_num_pep:
                         sql = "INSERT INTO people (firstname, lastname, address, phone, relationship, family, bibleschool, numberofpeople, status, job, tablenumber, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
                         res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_bibleschool, var_numofpep, var_status, var_job, var_tablenum, var_notes))
                         self.conn.commit()
@@ -1137,7 +1165,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 else:
                     var_people = old_people + ", " + var_n + " " + var_ln
                     var_remaining = old_remaining - int(var_numofpep)
-                    if var_remaining >= 0 and var_remaining <= self.table_num_pep:
+                    if int(var_remaining) >= 0 and int(var_remaining) <= self.table_num_pep:
                         sql = "INSERT INTO people (firstname, lastname, address, phone, relationship, family, bibleschool, numberofpeople, status, job, tablenumber, notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
                         res = self.cursor.execute(sql, (var_n, var_ln, var_address, var_phone, var_relationship, var_fam, var_bibleschool, var_numofpep, var_status, var_job, var_tablenum, var_notes))
                         self.conn.commit()
