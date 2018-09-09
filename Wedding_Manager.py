@@ -26,6 +26,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         ### Things that will be dynamically populated ###
         self.jobs = []
+        self.stores = []
         self.tablenum = 0
         self.tables = 0
         self.table_num_pep = 0
@@ -50,7 +51,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE people(ID integer PRIMARY KEY AUTOINCREMENT, firstname text, lastname text, address text, phone text, relationship text, family text,\
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
             self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, description text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
-                                importance text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
+                                importance text, store text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
             self.cursor.execute("""CREATE TABLE tables(people text, remaining int, relationship text, family text, notes text)""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
@@ -79,6 +80,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             res = self.cursor.execute(sql, ("None", "Best Man", "Maid of Honor", "Bridesmaid", "Groomsman", "Bridal Table Servers", "Family Table Servers", "Guest Servers", "Appetizer Servers", "Cleanup", "Dishwashers", "Devotional", "Guest Registrars", \
                                            "Gift Receivers", "Congregational Songs", "Ceremony Ushers", "Master of Ceremonies", "Photography", "Florists", "Cooks", "Prayer For Meal", "Welcome And Prayer", "Meditation", "Vocalists", "Exchange of Vows", \
                                            "Program Attendants", "Ceremony Coordinators", "Reception Coordinators", "Host & Hostess"))
+            self.conn.commit()
+
+            ### Init Stores
+            sql = "INSERT INTO items (store) VALUES (?),(?),(?),(?)"
+            self.cursor.execute(sql, ("None", "Amazon", "Sam's Club", "Walmart"))
             self.conn.commit()
 
             ### Init Tables
@@ -122,6 +128,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.tables_img = Tk.PhotoImage(file='tables_img.gif'), image=self.tables_img
         self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_tableinfo_window(self.tables, self.table_num_pep))
         self.tables_button.pack(side="left")
+
+        #self.store_img = Tk.PhotoImage(file='store_img.gif'), image=self.store_img
+        self.store_button = Tk.Button(self.toolbar, text="Stores", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_store)
+        self.store_button.pack(side="left")
         
         #======================== Main Frame=========================================================================
         
@@ -198,7 +208,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.create_columns(self.people_dataCols, self.jobs_columns, self.jobs_people)
 
         #=============================ALL Items Tab====================================================================
-        self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Importance")
+        self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Store")
         self.items_tab = ttk.Frame(self.tabControl)            # Create a tab 
         self.tabControl.add(self.items_tab, text='Items')      # Add the tab
         self.items_columns = ttk.Frame(self.items_tab)
@@ -218,32 +228,33 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #============================== Order of Service Tab =============================================================
         self.oos_tab = ttk.Frame(self.tabControl)
         self.tabControl.add(self.oos_tab, text='Order of Service')
-        self.ceremon_text = Tk.Text(self.oos_tab, font=("Arial", 18))
-        self.ceremon_text.pack(fill=Tk.BOTH)
+        self.ceremony_text = Tk.Text(self.oos_tab, font=("Arial", 18))
+        self.ceremony_text.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
 
-        formatted_jobs = ["Welcome And Prayer", "Congregational Songs", "Devotional", "Meditation", "Exchange of Vows", "Maid of Honor", "Best Man", "Bridesmaid", "Groomsman", \
+        self.formatted_jobs = ["Welcome And Prayer", "Congregational Songs", "Devotional", "Meditation", "Exchange of Vows", "Maid of Honor", "Best Man", "Bridesmaid", "Groomsman", \
                           "Ceremony Coordinators", "Ceremony Ushers", "Vocalists", "Guest Registrars", "Program Attendants", "Gift Receivers", "Reception Coordinators", "Master of Ceremonies", \
                           "Prayer For Meal", "Host & Hostess", "Bridal Table Servers", "Family Table Servers", "Guest Servers", "Appetizer Servers", "Cooks", "Dishwashers", "Cleanup", "Florists", "Photography"]
         
-        for i in formatted_jobs:
-            sql = "SELECT firstname,lastname,job FROM people WHERE job=(?)"
-            res = self.cursor.execute(sql, (i,))
+        
+        self.load_formatted_jobs()       
                 
-            for row in res:
-                self.ceremon_text.insert(Tk.END, row[2] + ' - ' + row[0] + ' ' + row[1] + "\n") 
-                print row[2] + ' - ' + row[0] + ' ' + row[1]
     
         #============================== Ceremony Tab =============================================================
         self.ceremony_tab = ttk.Frame(self.tabControl)
         self.tabControl.add(self.ceremony_tab, text='Ceremony')
-
+        self.ceremony_instructions = Tk.Text(self.ceremony_tab, font=("Arial", 18))
+        self.ceremony_instructions.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+        
         #============================== Reception Tab =============================================================
         self.reception_tab = ttk.Frame(self.tabControl)
         self.tabControl.add(self.reception_tab, text='Reception')
-
+        self.reception_instructions = Tk.Text(self.reception_tab, font=("Arial", 18))
+        self.reception_instructions.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
 
         self.load_budget_data()
+        self.load_store_data()
         self.load_job_data()
+        self.load_table_data()
         self.load_tables_data()
         self.load_cupfam_data()
         self.load_item_data()
@@ -366,7 +377,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         except:
             pass
 
-        sql = "SELECT item, description, cost, quantityneeded, whereneeded, buyingstatus, importance FROM items"
+        sql = "SELECT item, description, cost, quantityneeded, whereneeded, buyingstatus, store, importance FROM items WHERE item!=''"
         res = self.cursor.execute(sql)
         self.conn.commit()
 
@@ -377,10 +388,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             quantity = row[3]
             where_need = row[4]
             buying_status = row[5]
-            importance = row[6]
+            store = row[6]
+            importance = row[7]
             
             try:
-                self.all_items.insert('', 'end', tags=[importance], values=[item, desc, cost, quantity, where_need, buying_status, importance])
+                self.all_items.insert('', 'end', tags=[importance], values=[item, desc, cost, quantity, where_need, buying_status, store])
             except:
                 pass
             
@@ -442,6 +454,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 self.all_tables.insert('', 'end', tags=[], values=[row[0], row[1], row[2], row[3], row[4]])
             except:    
                 pass
+
+    def load_formatted_jobs(self):
+        self.ceremony_text.delete(1.0, Tk.END)
+        
+        for i in self.formatted_jobs:
+            sql = "SELECT firstname,lastname,job FROM people WHERE job=(?)"
+            res = self.cursor.execute(sql, (i,))
+                
+            for row in res:
+                
+                self.ceremony_text.insert(Tk.END, row[2] + ' - ' + row[0] + ' ' + row[1] + "\n")
     
     def load_cupfam_data(self):
         ### Setting the family instance variables ###
@@ -476,7 +499,18 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         for row in res:
             if row[0] not in self.jobs:
-                self.jobs.append(row[0])          
+                self.jobs.append(row[0])
+
+    def load_store_data(self):
+        self.stores = []
+
+        sql = "SELECT store FROM items"
+        res = self.cursor.execute(sql)
+        self.conn.commit()
+
+        for row in res:
+            if row[0] not in self.stores:
+                self.stores.append(row[0])     
 
     def sort_data(self, tree, col, descending=False):
         # grab values to sort as a list of tuples (column value, column id)
@@ -589,7 +623,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.people_ntext.pack(expand=1, fill=Tk.BOTH)
 
         #self.save_image = Tk.PhotoImage(file="save.gif")
-        self.sbutton = Tk.Button(self.toolbar1, text="Save", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25", command=self.save_person_db)
+        self.sbutton = Tk.Button(self.toolbar1, text="Add", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25", command=self.save_person_db)
         self.sbutton.pack(side="left")
 
     def add_item_window(self):
@@ -658,6 +692,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_importance.set("Low")
         self.item_importance_listbox.grid(row=6, column=1, sticky="w")
 
+        ### Item Store
+        self.item_store = Tk.StringVar(self.item_middle_frame)
+        self.item_store_label = Tk.Label(self.item_middle_frame, text="Store:", foreground="white", background="gray12")
+        self.item_store_label.grid(row=7, column=0, sticky="w")
+        self.item_store_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_store, *self.stores)
+        self.item_store_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.item_store.set("None")
+        self.item_store_listbox.grid(row=7, column=1, sticky="w")
+
+
         ### Add note box at bottom
         self.item_nlabel = Tk.Label(self.item_bottom_frame, text="Notes:", foreground="white", background="gray12")
         self.item_nlabel.pack(side="top", anchor="w")
@@ -683,6 +727,22 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.d_job_but.grid(row=1, column=1)
 
         self.a_job_but = Tk.Button(self.job_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_job_db)
+        self.a_job_but.grid(row=1, column=1, sticky="e")
+
+    def add_delete_store_window(self):
+        self.store_window = Tk.Toplevel(self, takefocus=True, background="gray12")
+        self.store_window.wm_title("Add/Delete Store")
+        self.store_window.geometry("300x75")
+
+        self.store_label = Tk.Label(self.store_window, text="Store:", foreground="white", background="gray12")
+        self.store_label.grid(row=0, column=0)
+        self.store_ent = Tk.Entry(self.store_window, highlightbackground="gray12", width=20)
+        self.store_ent.grid(row=0, column=1, sticky="w")
+
+        self.d_job_but = Tk.Button(self.store_window, text="Delete", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.delete_store_db)
+        self.d_job_but.grid(row=1, column=1)
+
+        self.a_job_but = Tk.Button(self.store_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_store_db)
         self.a_job_but.grid(row=1, column=1, sticky="e")
               
     def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, bibleschool, numofpep, status, job, table, notes):
@@ -801,7 +861,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.u_person_but = Tk.Button(self.toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_person_db)
         self.u_person_but.pack(side="left")
 
-    def update_view_item_window(self, item, desc, cost, quantity, whereneeded, buyingstatus, importance, notes):
+    def update_view_item_window(self, item, desc, cost, quantity, whereneeded, buyingstatus, importance, store, notes):
         
         self.view_item = Tk.Toplevel(self, takefocus=True)
         self.view_item.wm_title(" " + item + " " + desc)
@@ -868,6 +928,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_importance.set("Low")
         self.item_importance_listbox.grid(row=6, column=1, sticky="w")
 
+        ### Item Store
+        self.item_store = Tk.StringVar(self.item_middle_frame)
+        self.item_store_label = Tk.Label(self.item_middle_frame, text="Store:", foreground="white", background="gray12")
+        self.item_store_label.grid(row=7, column=0, sticky="w")
+        self.item_store_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_store, *self.stores)
+        self.item_store_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.item_store.set("None")
+        self.item_store_listbox.grid(row=7, column=1, sticky="w")
+
         ### Add note box at bottom
         self.item_nlabel = Tk.Label(self.item_bottom_frame, text="Notes:", foreground="white", background="gray12")
         self.item_nlabel.pack(side="top", anchor="w")
@@ -882,6 +951,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.where_needed.set(whereneeded)
         self.buying_status.set(buyingstatus)
         self.item_importance.set(importance)
+        self.item_store.set(store)
         self.item_ntext.insert(Tk.CURRENT, notes)
 
         self.u_item_but = Tk.Button(self.item_toolbar1, text="Save", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_item_db)
@@ -1104,9 +1174,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     view_where_needed = info[5]
                     view_buying_status = info[6]
                     view_importance = info[7]
-                    view_notes = info[8]
+                    view_store = info[8]
+                    view_notes = info[9]
                     
-                    self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7], info[8])
+                    self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7], info[8], info[9])
             except:
                 
                 selection = tree.item(tree.selection())['values'][0]
@@ -1181,7 +1252,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.load_tables_data()
             
         # Update People Tree
-        self.load_people_data()        
+        self.load_people_data()
+        self.load_formatted_jobs()       
 
     def save_item_db(self):
         save_item = self.item_ent.get() # Get Item
@@ -1191,14 +1263,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         save_where_needed = self.where_needed.get() # Get Where Needed
         save_buying_status = self.buying_status.get() # Get Buying Status
         save_importance = self.item_importance.get() # Get Item Importance
+        save_store = self.item_store.get() # Get Store
         save_notes = self.item_ntext.get("1.0", Tk.END) # Get Item Notes
 
-        sql = "INSERT INTO items (item, description, cost, quantityneeded, whereneeded, buyingstatus, importance, notes) VALUES (?,?,?,?,?,?,?,?)"
-        res = self.cursor.execute(sql, (save_item, save_desc, save_cost, save_quantity, save_where_needed, save_buying_status, save_importance, save_notes))
+        sql = "INSERT INTO items (item, description, cost, quantityneeded, whereneeded, buyingstatus, importance, store, notes) VALUES (?,?,?,?,?,?,?,?,?)"
+        res = self.cursor.execute(sql, (save_item, save_desc, save_cost, save_quantity, save_where_needed, save_buying_status, save_importance, save_store, save_notes))
         self.conn.commit()
 
         # Update Item Tree
         self.load_item_data()
+        self.load_store_data()
         # Update total_cost
         self.load_budget_data()
 
@@ -1210,6 +1284,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
 
         self.load_job_data()
+
+    def save_store_db(self):
+        save_store = self.store_ent.get() # Get Store
+
+        sql = "INSERT INTO items (store) VALUES (?)"
+        res = self.cursor.execute(sql, (save_store,))
+        self.conn.commit()
+
+        self.load_store_data()
 
     def save_tables_db(self):
        
@@ -1513,6 +1596,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                     
         self.load_tables_data()
+        self.load_formatted_jobs()
 
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
@@ -1532,10 +1616,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         update_where_needed = self.where_needed.get() # Get Where Needed
         update_buying_status = self.buying_status.get() # Get Buying Status
         update_importance = self.item_importance.get() # Get Item Importance
+        update_store = self.item_store.get() # Get Store
         update_notes = self.item_ntext.get("1.0", Tk.END) # Get Item Notes
 
-        sql = "UPDATE items SET item=(?), description=(?), cost=(?), quantityneeded=(?), whereneeded=(?), buyingstatus=(?), importance=(?), notes=(?) WHERE ID=(?)"
-        res = self.cursor.execute(sql, (update_item, update_desc, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_notes, self.itemrowid[0]))
+        sql = "UPDATE items SET item=(?), description=(?), cost=(?), quantityneeded=(?), whereneeded=(?), buyingstatus=(?), importance=(?), store=?, notes=(?) WHERE ID=(?)"
+        res = self.cursor.execute(sql, (update_item, update_desc, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_store, update_notes, self.itemrowid[0]))
 
         self.conn.commit()
 
@@ -1765,6 +1850,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
         
         self.load_job_data()
+
+    def delete_store_db(self):
+        delete_store = self.store_ent.get() # Get Store
+
+        sql = "DELETE FROM items WHERE store LIKE (?) AND item=''"
+        res = self.cursor.execute(sql, (delete_store,))
+        self.conn.commit()
+        
+        self.load_job_data()
            
     def add_person(self):
         self.add_person_window()
@@ -1774,6 +1868,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def add_job(self):
         self.add_delete_job_window()
+
+    def add_store(self):
+        self.add_delete_store_window()
 
     def update_window_title(self, window, firstname, lastname):
         window.wm_title(" " + firstname + " " + lastname)
