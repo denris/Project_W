@@ -2,6 +2,8 @@ import Tkinter as Tk                 # imports
 import tkMessageBox
 import ttk
 import sqlite3
+import subprocess
+from sys import platform
 
 class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
@@ -18,7 +20,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         master.title("Wedding Central") # Add a title
         master.configure(background="gray")
         #master.attributes('-topmost', 'true')
-        
+        # Find what Type of computer it is running on
+        if platform == "linux" or platform == "linux2":
+            self.platform = "linux"
+        elif platform == "darwin":
+            self.platform = "mac"
+        elif platform == "win32":
+            self.platform = "Windows"
+    
         #=================================================================================================
         
         self.conn = sqlite3.connect("W_management.db") # Establish Database Connection
@@ -698,7 +707,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_store_label.grid(row=7, column=0, sticky="w")
         self.item_store_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_store, *self.stores)
         self.item_store_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
-        self.item_store.set("None")
+        self.item_store.set(self.stores[0])
         self.item_store_listbox.grid(row=7, column=1, sticky="w")
 
 
@@ -726,7 +735,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.d_job_but = Tk.Button(self.job_window, text="Delete", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.delete_job_db)
         self.d_job_but.grid(row=1, column=1)
 
-        self.a_job_but = Tk.Button(self.job_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_job_db)
+        self.a_job_but = Tk.Button(self.job_window, text="Add", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_job_db)
         self.a_job_but.grid(row=1, column=1, sticky="e")
 
     def add_delete_store_window(self):
@@ -739,11 +748,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.store_ent = Tk.Entry(self.store_window, highlightbackground="gray12", width=20)
         self.store_ent.grid(row=0, column=1, sticky="w")
 
-        self.d_job_but = Tk.Button(self.store_window, text="Delete", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.delete_store_db)
-        self.d_job_but.grid(row=1, column=1)
+        self.d_store_but = Tk.Button(self.store_window, text="Delete", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.delete_store_db)
+        self.d_store_but.grid(row=1, column=1)
 
-        self.a_job_but = Tk.Button(self.store_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_store_db)
-        self.a_job_but.grid(row=1, column=1, sticky="e")
+        self.a_store_but = Tk.Button(self.store_window, text="Add", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.save_store_db)
+        self.a_store_but.grid(row=1, column=1, sticky="e")
               
     def update_view_person_window(self, firstname, lastname, address, phone, relationship, family, bibleschool, numofpep, status, job, table, notes):
         self.view_person = Tk.Toplevel(self, takefocus=True)
@@ -927,14 +936,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
         self.item_importance.set("Low")
         self.item_importance_listbox.grid(row=6, column=1, sticky="w")
-
+        
         ### Item Store
         self.item_store = Tk.StringVar(self.item_middle_frame)
         self.item_store_label = Tk.Label(self.item_middle_frame, text="Store:", foreground="white", background="gray12")
         self.item_store_label.grid(row=7, column=0, sticky="w")
         self.item_store_listbox = Tk.OptionMenu(self.item_middle_frame, self.item_store, *self.stores)
         self.item_store_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
-        self.item_store.set("None")
+        self.item_store.set(self.stores[0])
         self.item_store_listbox.grid(row=7, column=1, sticky="w")
 
         ### Add note box at bottom
@@ -1854,11 +1863,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def delete_store_db(self):
         delete_store = self.store_ent.get() # Get Store
 
-        sql = "DELETE FROM items WHERE store LIKE (?) AND item=''"
+        sql = "DELETE FROM items WHERE store LIKE (?) AND item IS NULL"
         res = self.cursor.execute(sql, (delete_store,))
         self.conn.commit()
         
-        self.load_job_data()
+        self.load_store_data()
            
     def add_person(self):
         self.add_person_window()
