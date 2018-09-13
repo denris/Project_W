@@ -22,11 +22,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #master.attributes('-topmost', 'true')
         # Find what Type of computer it is running on
         if platform == "linux" or platform == "linux2":
-            self.platform = "linux"
+            self.platform = "lin"
         elif platform == "darwin":
             self.platform = "mac"
         elif platform == "win32":
-            self.platform = "Windows"
+            self.platform = "win"
+
+        print self.platform
     
         #=================================================================================================
         
