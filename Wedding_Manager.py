@@ -1190,22 +1190,54 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     
                     self.update_view_item_window(info[1], info[2], info[3], info[4], info[5], info[6], info[7], info[8], info[9])
             except:
-                
-                selection = tree.item(tree.selection())['values'][0]
-                #selection1 = tree.item(tree.selection())['values'][1]
-                self.tablerowid = selection
-                sql = "SELECT * FROM tables WHERE rowid=(?)"
-                view = self.cursor.execute(sql, (selection,))
-                self.conn.commit()
-                
+                try:
+                    selection = tree.item(tree.selection())['values'][0]
+                    #selection1 = tree.item(tree.selection())['values'][1]
+                    self.tablerowid = selection
+                    sql = "SELECT * FROM tables WHERE rowid=(?)"
+                    view = self.cursor.execute(sql, (selection,))
+                    self.conn.commit()
+                    
 
-                for info in view:
-                    people = info[0]
-                    relationship = info[2]
-                    family = info[3]
-                    notes = info[4]
+                    for info in view:
+                        people = info[0]
+                        relationship = info[2]
+                        family = info[3]
+                        notes = info[4]
 
-                    self.update_view_tables_window(self.tablerowid, people, relationship, family, notes)
+                        self.update_view_tables_window(self.tablerowid, people, relationship, family, notes)
+                except:
+                    try:
+                        selection = self.tables_people_list.get(Tk.ACTIVE)
+                        selection, selection1 = selection.split()[0], selection.split()[1]
+            
+                        sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
+                        self.peoplerowid = self.cursor.execute(sql, (selection, selection1))
+                        self.conn.commit()
+                        sql = "SELECT * FROM people WHERE ID=(?)"
+                        for row in self.peoplerowid:
+                            self.peoplerowid = row
+                        view = self.cursor.execute(sql, (self.peoplerowid))
+                        self.conn.commit()
+                        
+                        for info in view:
+                            view_first = info[1]
+                            view_last = info[2]
+                            view_addr = info[3]
+                            view_phone = info[4]
+                            view_relation = info[5]
+                            view_fam = info[6]
+                            view_bibleschool = info[7]
+                            view_numofpep = info[8]
+                            view_stat = info[9]
+                            view_job = info[10]
+                            view_table = info[11]
+                            view_notes = info[12]
+                            
+                            self.update_view_person_window(info[1], info[2], info[3], info[4], info[5], \
+                                                    info[6], info[7], info[8], info[9], info[10], info[11], info[12])
+                    except:
+                        pass
                    
     def save_person_db(self):
         var_n = self.n_ent.get() # Get firstname
