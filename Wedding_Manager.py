@@ -49,6 +49,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.str_budget= "0.00"
         self.his = ""
         self.her = ""
+        self.old_firstname = ""
+        self.old_lastname = ""
         self.his_dad_fam = ""
         self.her_dad_fam = ""
         self.his_mom_fam = ""
@@ -445,8 +447,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for row in res:
             self.tables = row[0]
             self.table_num_pep = row[1]
-
-        self.save_tables_db()
 
     def load_tables_data(self):
 
@@ -1060,6 +1060,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
         self.u_tables_but = Tk.Button(self.tables_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_tables_db)
         self.u_tables_but.pack(side="left")
+        
 
     def update_view_cupfam_window(self, his, her, hisdad, herdad, hismom, hermom):
         self.view_message_window = Tk.Toplevel(self, takefocus=True, background="gray12")
@@ -1473,19 +1474,23 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         update_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
         ### Save old table number before it gets updated
-        sql = "SELECT tablenumber FROM people WHERE firstname=(?) AND lastname=(?)"
+        sql = "SELECT tablenumber, firstname, lastname FROM people WHERE firstname=(?) AND lastname=(?)"
         res = self.cursor.execute(sql, (update_n, update_ln))
         self.conn.commit()
 
         for table in res:
             self.tablenum = table[0]
-
+            self.old_firstname = table[1]
+            self.old_lastname = table[2]
+            
+        old_name = self.old_firstname + " " + self.old_lastname
         if int(update_tablenum) == self.tablenum: 
             sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
             res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
                                             update_job, update_tablenum, update_notes, self.peoplerowid[0]))
             self.conn.commit()
         else:
+            self.tables_people_list.delete(self.tables_people_list.index(Tk.ACTIVE))
             sql = "SELECT people,rowid,remaining FROM tables"
             res = self.cursor.execute(sql)
             self.conn.commit()
@@ -1640,7 +1645,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     
         self.load_tables_data()
         self.load_formatted_jobs()
-
+        
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
         self.load_people_data()
@@ -1703,6 +1708,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
 
         self.load_table_data()
+        self.save_tables_db()
 
     def update_tables_db(self):
         view_relationship = self.relation.get()
