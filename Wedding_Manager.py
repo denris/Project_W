@@ -28,7 +28,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         elif platform == "win32":
             self.platform = "win"
 
-        print self.platform
+        #print self.platform
     
         #=================================================================================================
         
