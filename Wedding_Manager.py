@@ -189,6 +189,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #=============================All People Tab====================================================================
 
         self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
+        self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Store")
+        self.table_dataCols = ("Number", "People", "Remaining", "relationship", "family")
+        
+        #=============================All People Tab====================================================================
+
+        self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
         self.all_people_tab = ttk.Frame(self.tabControl) 
         self.tabControl.add(self.all_people_tab, text='People')
         self.all_people_columns = ttk.Frame(self.all_people_tab)
@@ -210,7 +216,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.family_columns = ttk.Frame(self.family_tab)
 
         self.family_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
-        self.create_columns(self.people_dataCols, self.family_columns, self.family_people) 
+        self.create_columns(self.people_dataCols, self.family_columns, self.family_people)
+
+        #=============================Bible School Tab====================================================================
+        self.bibleschool_tab = ttk.Frame(self.tabControl)            # Create a tab 
+        self.tabControl.add(self.bibleschool_tab, text='Bible School')      # Add the tab
+        self.bibleschool_columns = ttk.Frame(self.bibleschool_tab)
+
+        self.bibleschool_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
+        self.create_columns(self.people_dataCols, self.bibleschool_columns, self.bibleschool_people) 
 
         #=============================Jobs Tab====================================================================
         self.jobs_tab = ttk.Frame(self.tabControl)            # Create a tab 
@@ -221,7 +235,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.create_columns(self.people_dataCols, self.jobs_columns, self.jobs_people)
 
         #=============================ALL Items Tab====================================================================
-        self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Store")
         self.items_tab = ttk.Frame(self.tabControl)            # Create a tab 
         self.tabControl.add(self.items_tab, text='Items')      # Add the tab
         self.items_columns = ttk.Frame(self.items_tab)
@@ -230,13 +243,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.create_columns(self.items_dataCols, self.items_columns, self.all_items)
 
         #=============================ALL Tables Tab====================================================================
-        self.table_dataCols = ("Number", "People", "Remaining", "relationship", "family")
         self.table_tab = ttk.Frame(self.tabControl)            # Create a tab 
         self.tabControl.add(self.table_tab, text='Tables')      # Add the tab
         self.table_columns = ttk.Frame(self.table_tab)
 
         self.all_tables = ttk.Treeview(columns=self.table_dataCols, show= 'headings')
         self.create_columns(self.table_dataCols, self.table_columns, self.all_tables)
+
 
         #============================== Order of Service Tab =============================================================
         self.oos_tab = ttk.Frame(self.tabControl)
@@ -248,10 +261,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                           "Ceremony Coordinators", "Ceremony Ushers", "Vocalists", "Guest Registrars", "Program Attendants", "Gift Receivers", "Reception Coordinators", "Master of Ceremonies", \
                           "Prayer For Meal", "Host & Hostess", "Bridal Table Servers", "Family Table Servers", "Guest Servers", "Appetizer Servers", "Cooks", "Dishwashers", "Cleanup", "Florists", "Photography"]
         
-        
-        self.load_formatted_jobs()       
-                
-    
         #============================== Ceremony Tab =============================================================
         self.ceremony_tab = ttk.Frame(self.tabControl)
         self.tabControl.add(self.ceremony_tab, text='Ceremony')
@@ -264,6 +273,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.reception_instructions = Tk.Text(self.reception_tab, font=("Arial", 18))
         self.reception_instructions.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
 
+        ### Loading initial data when app is run
         self.load_budget_data()
         self.load_store_data()
         self.load_job_data()
@@ -272,6 +282,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_cupfam_data()
         self.load_item_data()
         self.load_people_data()
+        self.load_formatted_jobs()
 
     #========================Creating Methods=========================================================================
 
@@ -351,8 +362,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.bp_people.delete(*self.bp_people.get_children())
         except:
             pass
+        try:
+            self.bibleschool_people.delete(*self.bp_people.get_children())
+        except:
+            pass
 
-        sql = "SELECT firstname, lastname, phone, numberofpeople, status, job, relationship, family FROM people"
+        sql = "SELECT firstname, lastname, phone, numberofpeople, status, job, relationship, family, bibleschool FROM people"
         res = self.cursor.execute(sql)
         self.conn.commit()
         for row in res:
@@ -364,6 +379,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             job = row[5]
             relationship = row[6]
             family = row[7]
+            bibleschool = row[8]
             
             self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             
@@ -381,6 +397,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             try: 
                 if job == "Best Man" or job == "Maid of Honor" or job == "Bridesmaid" or job == "Groomsman":
                     self.bp_people.insert('', 'end', tags=[job], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+            except:
+                pass
+            try: 
+                if bibleschool == 1:
+                    self.bibleschool_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             except:
                 pass
 
@@ -589,7 +610,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.is_bibleschool = Tk.IntVar()
         self.is_bibleschool_label = Tk.Label(self.middle_frame, text="Bibleschool:", highlightbackground="black", foreground="white", background="gray12")
         self.is_bibleschool_label.grid(row=6, column=0, sticky="w")
-        self.is_bibleschool_check = Tk.Checkbutton(self.middle_frame, background="gray12", variable=self.is_bibleschool)
+        self.is_bibleschool_check = Tk.Checkbutton(self.middle_frame, highlightbackground="black", background="gray12", variable=self.is_bibleschool)
         self.is_bibleschool_check.grid(row=6, column=1, sticky="w")
 
         self.n_coming = Tk.StringVar(self.middle_frame)
@@ -811,7 +832,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.is_bibleschool = Tk.IntVar()
         self.is_bibleschool_label = Tk.Label(self.middle_frame, text="Bibleschool:", highlightbackground="black", foreground="white", background="gray12")
         self.is_bibleschool_label.grid(row=6, column=0, sticky="w")
-        self.is_bibleschool_check = Tk.Checkbutton(self.middle_frame, background="gray12", variable=self.is_bibleschool)
+        self.is_bibleschool_check = Tk.Checkbutton(self.middle_frame, highlightbackground="black", background="gray12", variable=self.is_bibleschool)
         self.is_bibleschool_check.grid(row=6, column=1, sticky="w")
 
         self.n_coming = Tk.StringVar(self.middle_frame)
@@ -1289,9 +1310,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     else:
                         tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before saving.")
         
-        
-        
-
             self.load_tables_data()
             
         # Update People Tree
@@ -1491,12 +1509,20 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.update_tables_people_db(self.old_firstname, self.old_lastname, update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
                                         update_job, update_tablenum, update_notes)
 
-        self.load_tables_data()
-        self.load_formatted_jobs()
+        self.load_tables_data() # Updating the tables when people are updated
+        self.load_formatted_jobs() # Loading the text box in a nice format
+        
+        ### Dynamically update people tabs
         self.family_people.delete(*self.family_people.get_children())
         self.all_people.delete(*self.all_people.get_children())
+        self.jobs_people.delete(*self.jobs_people.get_children())
+        self.bp_people.delete(*self.bp_people.get_children())
+        self.bibleschool_people.delete(*self.bibleschool_people.get_children())
         self.load_people_data()
+        ### Dynamically update the title of the person being edited
         self.update_window_title(self.view_person, update_n, update_ln)
+        
+        ### Dynamically updating the search tree
         try:
             self.search_tree.delete(*self.search_tree.get_children())
             self.search_tree.insert('', 'end', tags=[update_status], values=[update_n, update_ln, update_phone, update_numofpep, update_status, update_job, update_relationship])
@@ -1942,6 +1968,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def update_window_title(self, window, firstname, lastname):
         window.wm_title(" " + firstname + " " + lastname)
         
+    def create_tab(self, tab, columns, tree, datacols, name):
+        pass
+
     def destroy_window(self, window):
         window.destroy()
 
