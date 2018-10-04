@@ -51,7 +51,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.her = ""
         self.old_firstname = ""
         self.old_lastname = ""
-        self.id = 0
         self.his_dad_fam = ""
         self.her_dad_fam = ""
         self.his_mom_fam = ""
@@ -1473,15 +1472,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         update_tablenum = self.table.get()
         update_notes = self.people_ntext.get("1.0", Tk.END) # Get Notes
         
-        sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
-        res = self.cursor.execute(sql, (update_n, update_ln))
-        self.conn.commit()
-        for row in res:
-            self.id = row[0]
-        
         ### Save old table number before it gets updated
         sql = "SELECT tablenumber, firstname, lastname FROM people WHERE ID=(?)"
-        res = self.cursor.execute(sql, (self.id,))
+        res = self.cursor.execute(sql, (self.peoplerowid))
         self.conn.commit()
         
         for row in res:
@@ -1579,13 +1572,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_tables_data()
 
     def update_tables_people_db(self, old_firstname, old_lastname, update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                update_job, update_tablenum, update_notes):
-        ### Getting old persons name in case name and table and updated at the same time
-        old_name = old_firstname + ' ' + old_lastname + "hello"
-        current_name = update_n + " " + update_ln + "hello"
-        print old_name
-        print current_name
-        
+                                update_job, update_tablenum, update_notes):      
+        old_name = old_firstname + ' ' + old_lastname
+
         try:
             self.tables_people_list.delete(self.tables_people_list.index(Tk.ACTIVE))
         except:
@@ -1647,7 +1636,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     if update_n + " " + update_ln == old_name:
                         list_old_people.remove(update_n + " " + update_ln)
                     else:
-                        print old_name + " removed"
                         list_old_people.remove(old_name)
 
                     if len(list_old_people) > 0:
@@ -1669,7 +1657,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             
             
             if test_name in list_old_people or old_name in list_old_people and int(update_tablenum) != old_table and int(update_tablenum) > 0:
-                print "Hello World"
+                
                 sql = "SELECT people,remaining FROM tables WHERE rowid=(?)"
                 res = self.cursor.execute(sql, (update_tablenum,))
                 self.conn.commit()
@@ -1680,7 +1668,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     
                     new_remaining = row[1]
                     if new_table_list == [u""]:
-                        print "right"
                         update_people = update_n + " " + update_ln
                         update_remaining = self.table_num_pep - int(update_numofpep)
                         if update_remaining >= 0 and update_remaining <= self.table_num_pep:
@@ -1697,8 +1684,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         if update_n + " " + update_ln == old_name:
                             list_old_people.remove(update_n + " " + update_ln)
                         else:
-                            print list_old_people
-                            print old_name + " removed"
                             list_old_people.remove(old_name)
                         
                         if len(list_old_people) > 0:
@@ -1738,7 +1723,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         if update_n + " " + update_ln == old_name:
                             list_old_people.remove(update_n + " " + update_ln)
                         else:
-                            print old_name + " removed"
                             list_old_people.remove(old_name)
                         
                         if len(list_old_people) > 0:
