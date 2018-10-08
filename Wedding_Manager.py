@@ -986,7 +986,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_store.set(store)
         self.item_ntext.insert(Tk.CURRENT, notes)
 
-        self.u_item_but = Tk.Button(self.item_toolbar1, text="Save", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_item_db)
+        self.u_item_but = Tk.Button(self.item_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_item_db)
         self.u_item_but.pack(side="left")
 
     def update_view_budget_window(self, budget):
