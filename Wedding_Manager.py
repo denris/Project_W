@@ -250,8 +250,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.all_tables = ttk.Treeview(columns=self.table_dataCols, show= 'headings')
         self.create_columns(self.table_dataCols, self.table_columns, self.all_tables)
 
-
-        #============================== Order of Service Tab =============================================================
+    #============================== Order of Service Tab =============================================================
         self.oos_tab = ttk.Frame(self.tabControl)
         self.tabControl.add(self.oos_tab, text='Order of Service')
         self.ceremony_text = Tk.Text(self.oos_tab, font=("Arial", 18))
