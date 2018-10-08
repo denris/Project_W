@@ -191,6 +191,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
         self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Store")
         self.table_dataCols = ("Number", "People", "Remaining", "relationship", "family")
+        self.todo_dataCols = ()
         
         #=============================All People Tab====================================================================
 
@@ -250,7 +251,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.all_tables = ttk.Treeview(columns=self.table_dataCols, show= 'headings')
         self.create_columns(self.table_dataCols, self.table_columns, self.all_tables)
 
-    #============================== Order of Service Tab =============================================================
+        #=============================To Do Tab====================================================================
+        self.todo_tab = ttk.Frame(self.tabControl)            # Create a tab 
+        self.tabControl.add(self.todo_tab, text="To Do's")      # Add the tab
+        self.todo_columns = ttk.Frame(self.todo_tab)
+
+        self.to_do = ttk.Treeview(columns=self.todo_dataCols, show= 'headings')
+        self.create_columns(self.todo_dataCols, self.todo_columns, self.to_do)
+
+        #============================== Order of Service Tab =============================================================
         self.oos_tab = ttk.Frame(self.tabControl)
         self.tabControl.add(self.oos_tab, text='Order of Service')
         self.ceremony_text = Tk.Text(self.oos_tab, font=("Arial", 18))
