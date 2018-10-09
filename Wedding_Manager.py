@@ -65,6 +65,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
             self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, description text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
                                 importance text, store text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
+            self.cursor.execute("""CREATE TABLE tasks(ID integer PRIMARY KEY AUTOINCREMENT, task text, whereneeded text, importance text, category text, person text, status text, \\ 
+                                notes text, CONSTRAINT name_unique UNIQUE (task, category, person, notes))""")
             self.cursor.execute("""CREATE TABLE tables(people text, remaining int, relationship text, family text, notes text)""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
@@ -122,6 +124,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_img = Tk.PhotoImage(file='add_item.gif')
         self.add_item_button = Tk.Button(self.toolbar, text="Add Item", font=("Ariel", 8), image=self.item_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_item)
         self.add_item_button.pack(side="left")
+
+        #self.todo_img = Tk.PhotoImage(file='add_item.gif') , image=self.todo
+        self.add_todo_button = Tk.Button(self.toolbar, text="Add ToDo", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_todo)
+        self.add_todo_button.pack(side="left")
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator1.pack(side="left", fill=Tk.BOTH, padx=2)
@@ -191,7 +197,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
         self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Store")
         self.table_dataCols = ("Number", "People", "Remaining", "relationship", "family")
-        self.todo_dataCols = ()
+        self.todo_dataCols = ("Task", "Where Needed", "Importance", "Category", "Person", "Task Status")
         
         #=============================All People Tab====================================================================
 
@@ -234,6 +240,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.jobs_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
         self.create_columns(self.people_dataCols, self.jobs_columns, self.jobs_people)
+        
+        #=============================To Do Tab====================================================================
+        self.todo_tab = ttk.Frame(self.tabControl)            # Create a tab 
+        self.tabControl.add(self.todo_tab, text="To Do's")      # Add the tab
+        self.todo_columns = ttk.Frame(self.todo_tab)
+
+        self.to_do = ttk.Treeview(columns=self.todo_dataCols, show= 'headings')
+        self.create_columns(self.todo_dataCols, self.todo_columns, self.to_do)
 
         #=============================ALL Items Tab====================================================================
         self.items_tab = ttk.Frame(self.tabControl)            # Create a tab 
@@ -250,14 +264,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.all_tables = ttk.Treeview(columns=self.table_dataCols, show= 'headings')
         self.create_columns(self.table_dataCols, self.table_columns, self.all_tables)
-
-        #=============================To Do Tab====================================================================
-        self.todo_tab = ttk.Frame(self.tabControl)            # Create a tab 
-        self.tabControl.add(self.todo_tab, text="To Do's")      # Add the tab
-        self.todo_columns = ttk.Frame(self.todo_tab)
-
-        self.to_do = ttk.Treeview(columns=self.todo_dataCols, show= 'headings')
-        self.create_columns(self.todo_dataCols, self.todo_columns, self.to_do)
 
         #============================== Order of Service Tab =============================================================
         self.oos_tab = ttk.Frame(self.tabControl)
@@ -437,6 +443,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 self.all_items.insert('', 'end', tags=[importance], values=[item, desc, cost, quantity, where_need, buying_status, store])
             except:
                 pass
+
+    def load_task_data(self):
+        try:
+            self.to_do.delete(*self.to_do.get_children())
+        except:
+            pass
+
+        sql = "SELECT task, whereneeded, importance, category, person, status FROM tasks WHERE tasks!=''"
             
     def load_budget_data(self):
         ### Setting Budget information ###
@@ -705,7 +719,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.item_quantity_ent = Tk.Entry(self.item_middle_frame, highlightbackground="gray12", width=4)
         self.item_quantity_ent.grid(row=3, column=1, sticky="w")
 
-        ### Where Needed
+        ### Where Item Needed
         self.where_needed = Tk.StringVar(self.item_middle_frame)
         self.where_needed_label = Tk.Label(self.item_middle_frame, text="Where Needed:", foreground="white", background="gray12")
         self.where_needed_label.grid(row=4, column=0, sticky="w")
@@ -752,6 +766,82 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
         self.a_item_but = Tk.Button(self.item_toolbar1, text="Add", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.save_item_db)
         self.a_item_but.pack(side="left")
+
+    def add_todo_window(self):
+        self.todo_window = Tk.Toplevel(self, takefocus=True)
+        self.todo_window.wm_title("Add Item")
+        self.todo_window.geometry("550x500")
+
+        self.todo_toolbar1 = Tk.Frame(self.todo_window, bd=1, relief=Tk.RAISED, background="gray25")
+        
+        self.todo_toolbar1.pack(side="top", fill=Tk.X)
+        
+        self.todo_middle_frame = Tk.Frame(self.todo_window, background="gray12")
+        self.todo_middle_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        self.todo_bottom_frame = Tk.Frame(self.todo_window, background="gray12")
+        self.todo_bottom_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        ### What Task Needs Done
+        self.task_label = Tk.Label(self.todo_middle_frame, text="Task:", foreground="white", background="gray12")
+        self.task_label.grid(row=0, column=0, sticky="w")
+        self.task_ent = Tk.Entry(self.todo_middle_frame, highlightbackground="gray12", width=50)
+        self.task_ent.grid(row=0, column=1, sticky="w")
+
+        ### Where Task Needed
+        self.where_task_needed = Tk.StringVar(self.todo_middle_frame)
+        self.where_task_needed_label = Tk.Label(self.todo_middle_frame, text="Where Needed:", foreground="white", background="gray12")
+        self.where_task_needed_label.grid(row=1, column=0, sticky="w")
+        self.where_task_needed_listbox = Tk.OptionMenu(self.todo_middle_frame, self.where_task_needed, "None", "Ceremony", "Reception")
+        self.where_task_needed_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.where_task_needed.set("None")
+        self.where_task_needed_listbox.grid(row=1, column=1, sticky="w")
+
+        ### Task Importance
+        self.task_importance = Tk.StringVar(self.todo_middle_frame)
+        self.task_importance_label = Tk.Label(self.todo_middle_frame, text="Importance:", foreground="white", background="gray12")
+        self.task_importance_label.grid(row=2, column=0, sticky="w")
+        self.task_importance_listbox = Tk.OptionMenu(self.todo_middle_frame, self.task_importance, "Low", "Medium", "High")
+        self.task_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.task_importance.set("Low")
+        self.task_importance_listbox.grid(row=2, column=1, sticky="w")
+
+        ### Task Category
+        self.task_category = Tk.StringVar(self.todo_bottom_frame)
+        self.task_category_label = Tk.Label(self.todo_middle_frame, text="Category:", foreground="white", background="gray12")
+        self.task_category_label.grid(row=3, column=0, sticky="w")
+        self.task_category_listbox = Tk.OptionMenu(self.todo_middle_frame, self.task_category, "None", "Shopping", "Contacted", "Made","Labor")
+        self.task_category_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.task_category.set("None")
+        self.task_category_listbox.grid(row=3, column=1, sticky="w")
+
+        ### Who needs to do Task
+        self.task_person = Tk.StringVar(self.todo_bottom_frame)
+        self.task_person_label = Tk.Label(self.todo_middle_frame, text="Person:", foreground="white", background="gray12")
+        self.task_person_label.grid(row=4, column=0, sticky="w")
+        self.task_person_listbox = Tk.OptionMenu(self.todo_middle_frame, self.task_person, "Anyone", self.his, self.her, "Other")
+        self.task_person_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.task_person.set("Anyone")
+        self.task_person_listbox.grid(row=4, column=1, sticky="w")
+
+        ### Task status
+        self.task_status = Tk.StringVar(self.todo_middle_frame)
+        self.task_status_label = Tk.Label(self.todo_middle_frame, text="Task Status:", foreground="white", background="gray12")
+        self.task_status_label.grid(row=5, column=0, sticky="w")
+        self.task_status_listbox = Tk.OptionMenu(self.todo_middle_frame, self.task_status, "Not Started", "In Progress", "Done")
+        self.task_status_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.task_status.set("Not Started")
+        self.task_status_listbox.grid(row=5, column=1, sticky="w")
+
+        ### Add note box at bottom
+        self.task_nlabel = Tk.Label(self.todo_bottom_frame, text="Notes:", foreground="white", background="gray12")
+        self.task_nlabel.pack(side="top", anchor="w")
+        self.task_ntext = Tk.Text(self.todo_bottom_frame, height=10)
+        self.task_ntext.pack(expand=1, fill=Tk.BOTH)
+
+        #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
+        self.a_todo_but = Tk.Button(self.todo_toolbar1, text="Add", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.save_todo_db)
+        self.a_todo_but.pack(side="left")
 
     def add_delete_job_window(self):
         self.job_window = Tk.Toplevel(self, takefocus=True, background="gray12")
@@ -996,6 +1086,82 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.u_item_but = Tk.Button(self.item_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_item_db)
         self.u_item_but.pack(side="left")
+
+    def update_view_todo_window(self):
+        self.view_task = Tk.Toplevel(self, takefocus=True)
+        self.view_task.wm_title(task)
+        self.view_task.geometry("550x500")
+
+        self.todo_toolbar1 = Tk.Frame(self.view_task, bd=1, relief=Tk.RAISED, background="gray25")
+        
+        self.todo_toolbar1.pack(side="top", fill=Tk.X)
+        
+        self.todo_middle_frame = Tk.Frame(self.view_task, background="gray12")
+        self.todo_middle_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        self.todo_bottom_frame = Tk.Frame(self.view_task, background="gray12")
+        self.todo_bottom_frame.pack(expand=1, fill=Tk.BOTH)
+        
+        ### What Task Needs Done
+        self.task_label = Tk.Label(self.todo_middle_frame, text="Task:", foreground="white", background="gray12")
+        self.task_label.grid(row=0, column=0, sticky="w")
+        self.task_ent = Tk.Entry(self.todo_middle_frame, highlightbackground="gray12", width=50)
+        self.task_ent.grid(row=0, column=1, sticky="w")
+
+        ### Where Task Needed
+        self.where_task_needed = Tk.StringVar(self.todo_middle_frame)
+        self.where_task_needed_label = Tk.Label(self.todo_middle_frame, text="Where Needed:", foreground="white", background="gray12")
+        self.where_task_needed_label.grid(row=1, column=0, sticky="w")
+        self.where_task_needed_listbox = Tk.OptionMenu(self.todo_middle_frame, self.where_task_needed, "None", "Ceremony", "Reception")
+        self.where_task_needed_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.where_task_needed.set("None")
+        self.where_task_needed_listbox.grid(row=1, column=1, sticky="w")
+
+        ### Task Importance
+        self.task_importance = Tk.StringVar(self.todo_middle_frame)
+        self.task_importance_label = Tk.Label(self.todo_middle_frame, text="Importance:", foreground="white", background="gray12")
+        self.task_importance_label.grid(row=2, column=0, sticky="w")
+        self.task_importance_listbox = Tk.OptionMenu(self.todo_middle_frame, self.task_importance, "Low", "Medium", "High")
+        self.task_importance_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.task_importance.set("Low")
+        self.task_importance_listbox.grid(row=2, column=1, sticky="w")
+
+        ### Task Category
+        self.task_category = Tk.StringVar(self.todo_bottom_frame)
+        self.task_category_label = Tk.Label(self.todo_middle_frame, text="Category:", foreground="white", background="gray12")
+        self.task_category_label.grid(row=3, column=0, sticky="w")
+        self.task_category_listbox = Tk.OptionMenu(self.todo_middle_frame, self.task_category, "None", "Shopping", "Contacted", "Made","Labor")
+        self.task_category_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.task_category.set("None")
+        self.task_category_listbox.grid(row=3, column=1, sticky="w")
+
+        ### Who needs to do Task
+        self.task_person = Tk.StringVar(self.todo_bottom_frame)
+        self.task_person_label = Tk.Label(self.todo_middle_frame, text="Person:", foreground="white", background="gray12")
+        self.task_person_label.grid(row=4, column=0, sticky="w")
+        self.task_person_listbox = Tk.OptionMenu(self.todo_middle_frame, self.task_person, "Anyone", self.his, self.her, "Other")
+        self.task_person_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.task_person.set("Anyone")
+        self.task_person_listbox.grid(row=4, column=1, sticky="w")
+
+        ### Task status
+        self.task_status = Tk.StringVar(self.todo_middle_frame)
+        self.task_status_label = Tk.Label(self.todo_middle_frame, text="Task Status:", foreground="white", background="gray12")
+        self.task_status_label.grid(row=5, column=0, sticky="w")
+        self.task_status_listbox = Tk.OptionMenu(self.todo_middle_frame, self.task_status, "Not Started", "In Progress", "Done")
+        self.task_status_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.task_status.set("Not Started")
+        self.task_status_listbox.grid(row=5, column=1, sticky="w")
+
+        ### Add note box at bottom
+        self.task_nlabel = Tk.Label(self.todo_bottom_frame, text="Notes:", foreground="white", background="gray12")
+        self.task_nlabel.pack(side="top", anchor="w")
+        self.task_ntext = Tk.Text(self.todo_bottom_frame, height=10)
+        self.task_ntext.pack(expand=1, fill=Tk.BOTH)
+
+        #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
+        self.u_todo_but = Tk.Button(self.todo_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_todo_db)
+        self.u_todo_but.pack(side="left")
 
     def update_view_budget_window(self, budget):
         self.view_budget_window = Tk.Toplevel(self, takefocus=True, background="gray12")
@@ -1345,6 +1511,22 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         # Update total_cost
         self.load_budget_data()
 
+    def save_todo_db(self):
+        save_task = self.task_ent.get() # Get Task
+        save_whereneeded = self.where_task_needed.get() # Get Task Whereneeded
+        save_importance = self.task_importance.get() # Get Task Importance
+        save_category = self.task_category.get() # Get Task Category
+        save_person = self.task_person.get() # Get Task Person
+        save_status = self.task_status.get() # Get Task Progress Status
+        save_notes = self.task_ntext.get("1.0", Tk.END) # Get Task Notes
+
+        sql = "INSERT INTO tasks (task, whereneeded, importance, category, person, status, notes) VALUES (?,?,?,?,?,?,?)"
+        res = self.cursor.execute(sql, (save_task, save_whereneeded, save_importance, save_category, save_person, save_status, \
+                                        save_notes))
+        self.conn.commit()
+
+        self.load_task_data()
+
     def save_job_db(self):
         save_job = self.job_ent.get() # Get Job
 
@@ -1565,6 +1747,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.search_tree.insert('', 'end', tags=[update_importance], values=[update_item, update_desc, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_notes])
         except:
             pass
+
+    def update_todo_db(self):
+        pass
 
     def update_budget_db(self):
         view_bugdet = self.total_budget_ent.get() # Get budget value
@@ -1966,6 +2151,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def add_item(self):
         self.add_item_window()
+
+    def add_todo(self):
+        self.add_todo_window()
 
     def add_job(self):
         self.add_delete_job_window()
