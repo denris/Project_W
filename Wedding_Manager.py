@@ -65,8 +65,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                 bibleschool int, numberofpeople int, status text, job text, tablenumber int, notes text, CONSTRAINT name_unique UNIQUE (firstname, lastname, address))""")
             self.cursor.execute("""CREATE TABLE items(ID integer PRIMARY KEY AUTOINCREMENT, item text, description text, cost real, quantityneeded int, whereneeded text, buyingstatus text, \
                                 importance text, store text, notes text, CONSTRAINT name_unique UNIQUE (description))""")
-            self.cursor.execute("""CREATE TABLE tasks(ID integer PRIMARY KEY AUTOINCREMENT, task text, whereneeded text, importance text, category text, person text, status text, \\ 
-                                notes text, CONSTRAINT name_unique UNIQUE (task, category, person, notes))""")
+            self.cursor.execute("""CREATE TABLE tasks(ID integer PRIMARY KEY AUTOINCREMENT, task text, whereneeded text, importance text, category text, person text, status text, notes text, CONSTRAINT name_unique UNIQUE (task, category, person, notes))""")
             self.cursor.execute("""CREATE TABLE tables(people text, remaining int, relationship text, family text, notes text)""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
@@ -295,6 +294,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_tables_data()
         self.load_cupfam_data()
         self.load_item_data()
+        self.load_task_data()
         self.load_people_data()
         self.load_formatted_jobs()
 
@@ -322,10 +322,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         ### Load all needed application data
         tree.tag_configure("Invited", foreground='purple')
-        tree.tag_configure("Coming", foreground='darkgreen')
-        tree.tag_configure("Low", foreground='darkgreen')
+        tree.tag_configure("Coming", foreground='green')
+        tree.tag_configure("Low", foreground='green')
         tree.tag_configure("Medium", foreground='yellow')
         tree.tag_configure("High", foreground='red')
+        tree.tag_configure("Not Started", foreground='red')
+        tree.tag_configure("In Progress", foreground='yellow')
+        tree.tag_configure("Done", foreground='green')
         
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
         tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))    
@@ -339,10 +342,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         ### Configure Tags
         self.search_tree.tag_configure("Invited", foreground='purple')
-        self.search_tree.tag_configure("Coming", foreground='darkgreen')
-        self.search_tree.tag_configure("Low", foreground='darkgreen')
+        self.search_tree.tag_configure("Coming", foreground='green')
+        self.search_tree.tag_configure("Low", foreground='green')
         self.search_tree.tag_configure("Medium", foreground='yellow')
         self.search_tree.tag_configure("High", foreground='red')
+        self.search_tree.tag_configure("Not Started", foreground='red')
+        self.search_tree.tag_configure("In Progress", foreground='yellow')
+        self.search_tree.tag_configure("Done", foreground='green')
                     
         # add tree and scrollbars to frame
         self.search_tree.grid(in_=columns, row=0, column=0, sticky=Tk.NSEW)
@@ -450,7 +456,22 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         except:
             pass
 
-        sql = "SELECT task, whereneeded, importance, category, person, status FROM tasks WHERE tasks!=''"
+        sql = "SELECT task, whereneeded, importance, category, person, status FROM tasks"
+        res = self.cursor.execute(sql)
+        self.conn.commit()
+
+        for row in res:
+            task = row[0]
+            where_need = row[1]
+            importance = row[2]
+            category = row[3]
+            person = row[4]
+            status = row[5]
+
+            try:
+                self.to_do.insert('', 'end', tags=[status], values=[task, where_need, importance, category, person, status])
+            except:
+                pass 
             
     def load_budget_data(self):
         ### Setting Budget information ###
@@ -1087,9 +1108,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.u_item_but = Tk.Button(self.item_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_item_db)
         self.u_item_but.pack(side="left")
 
-    def update_view_todo_window(self):
+    def update_view_todo_window(self, task, where_need, importance, category, person, status, notes):
         self.view_task = Tk.Toplevel(self, takefocus=True)
-        self.view_task.wm_title(task)
+        self.view_task.wm_title(" " + task + " " + status)
         self.view_task.geometry("550x500")
 
         self.todo_toolbar1 = Tk.Frame(self.view_task, bd=1, relief=Tk.RAISED, background="gray25")
@@ -1158,6 +1179,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.task_nlabel.pack(side="top", anchor="w")
         self.task_ntext = Tk.Text(self.todo_bottom_frame, height=10)
         self.task_ntext.pack(expand=1, fill=Tk.BOTH)
+
+        ### Fill fields from db
+        self.task_ent.insert(0,task)
+        self.where_task_needed.set(where_need)
+        self.task_importance.set(importance)
+        self.task_category.set(category)
+        self.task_person.set(person)
+        self.task_status.set(status)
+        self.task_ntext.insert(Tk.CURRENT,notes)
 
         #self.update_person_image = Tk.PhotoImage(file="update_person.gif")
         self.u_todo_but = Tk.Button(self.todo_toolbar1, text="Update", font=("Arial", 12, "bold", "italic"), highlightbackground="gray25",  command=self.update_todo_db)
@@ -1387,53 +1417,77 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             except:
                 try:
                     selection = tree.item(tree.selection())['values'][0]
-                    #selection1 = tree.item(tree.selection())['values'][1]
-                    self.tablerowid = selection
-                    sql = "SELECT * FROM tables WHERE rowid=(?)"
-                    view = self.cursor.execute(sql, (selection,))
+                    selection1 = tree.item(tree.selection())['values'][3]
+                    sql = "SELECT ID FROM tasks WHERE task=(?) AND category=(?)"
+                    self.taskrowid = self.cursor.execute(sql, (selection, selection1))
                     self.conn.commit()
-                    
+                    sql = "SELECT * FROM tasks WHERE ID=(?)"
+                    for row in self.taskrowid:
+                        self.taskrowid = row
+                    view = self.cursor.execute(sql, (self.taskrowid))
+                    self.conn.commit()
 
                     for info in view:
-                        people = info[0]
-                        relationship = info[2]
-                        family = info[3]
-                        notes = info[4]
+                        view_task = info[1]
+                        view_where_need = info[2]
+                        view_importance = info[3]
+                        view_category = info[4]
+                        view_person = info[5]
+                        view_status = info[6]
+                        view_notes = info[7]
 
-                        self.update_view_tables_window(self.tablerowid, people, relationship, family, notes)
+                        self.update_view_todo_window(view_task, view_where_need, view_importance, view_category, view_person, \
+                                                     view_status, view_notes)
                 except:
                     try:
-                        selection = self.tables_people_list.get(Tk.ACTIVE)
-                        selection, selection1 = selection.split()[0], selection.split()[1]
-            
-                        sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
-                        self.peoplerowid = self.cursor.execute(sql, (selection, selection1))
-                        self.conn.commit()
-                        sql = "SELECT * FROM people WHERE ID=(?)"
-                        for row in self.peoplerowid:
-                            self.peoplerowid = row
-                        view = self.cursor.execute(sql, (self.peoplerowid))
+                        selection = tree.item(tree.selection())['values'][0]
+                        #selection1 = tree.item(tree.selection())['values'][1]
+                        self.tablerowid = selection
+                        sql = "SELECT * FROM tables WHERE rowid=(?)"
+                        view = self.cursor.execute(sql, (selection,))
                         self.conn.commit()
                         
+
                         for info in view:
-                            view_first = info[1]
-                            view_last = info[2]
-                            view_addr = info[3]
-                            view_phone = info[4]
-                            view_relation = info[5]
-                            view_fam = info[6]
-                            view_bibleschool = info[7]
-                            view_numofpep = info[8]
-                            view_stat = info[9]
-                            view_job = info[10]
-                            view_table = info[11]
-                            view_notes = info[12]
-                            
-                            self.update_view_person_window(info[1], info[2], info[3], info[4], info[5], \
-                                                    info[6], info[7], info[8], info[9], info[10], info[11], info[12])
+                            people = info[0]
+                            relationship = info[2]
+                            family = info[3]
+                            notes = info[4]
+
+                            self.update_view_tables_window(self.tablerowid, people, relationship, family, notes)
                     except:
-                        pass
-                   
+                        try:
+                            selection = self.tables_people_list.get(Tk.ACTIVE)
+                            selection, selection1 = selection.split()[0], selection.split()[1]
+                
+                            sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
+                            self.peoplerowid = self.cursor.execute(sql, (selection, selection1))
+                            self.conn.commit()
+                            sql = "SELECT * FROM people WHERE ID=(?)"
+                            for row in self.peoplerowid:
+                                self.peoplerowid = row
+                            view = self.cursor.execute(sql, (self.peoplerowid))
+                            self.conn.commit()
+                            
+                            for info in view:
+                                view_first = info[1]
+                                view_last = info[2]
+                                view_addr = info[3]
+                                view_phone = info[4]
+                                view_relation = info[5]
+                                view_fam = info[6]
+                                view_bibleschool = info[7]
+                                view_numofpep = info[8]
+                                view_stat = info[9]
+                                view_job = info[10]
+                                view_table = info[11]
+                                view_notes = info[12]
+                                
+                                self.update_view_person_window(info[1], info[2], info[3], info[4], info[5], \
+                                                        info[6], info[7], info[8], info[9], info[10], info[11], info[12])
+                        except:
+                            pass
+                    
     def save_person_db(self):
         var_n = self.n_ent.get() # Get firstname
         var_ln = self.ln_ent.get() # Get Lastname
@@ -1734,8 +1788,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql, (update_item, update_desc, update_cost, update_quantity, update_where_needed, update_buying_status, update_importance, update_store, update_notes, self.itemrowid[0]))
 
         self.conn.commit()
-
-        self.all_items.delete(*self.all_items.get_children())
         
         self.load_item_data() # Reload the items tree to reflect changes
         
@@ -1749,7 +1801,20 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             pass
 
     def update_todo_db(self):
-        pass
+        update_task = self.task_ent.get() # Get Task
+        update_whereneeded = self.where_task_needed.get() # Get Task Whereneeded
+        update_importance = self.task_importance.get() # Get Task Importance
+        update_category = self.task_category.get() # Get Task Category
+        update_person = self.task_person.get() # Get Task Person
+        update_status = self.task_status.get() # Get Task Progress Status
+        update_notes = self.task_ntext.get("1.0", Tk.END) # Get Task Notes
+
+        sql = "UPDATE tasks SET task=(?), whereneeded=(?), importance=(?), category=(?), person=(?), status=(?), notes=(?) WHERE ID=(?)"
+        res = self.cursor.execute(sql, (update_task, update_whereneeded, update_importance, update_category, update_person, update_status, \
+                                        update_notes, self.taskrowid[0]))
+        self.conn.commit()
+        self.load_task_data()
+        self.update_window_title(self.view_task, update_task, update_status)
 
     def update_budget_db(self):
         view_bugdet = self.total_budget_ent.get() # Get budget value
@@ -1977,11 +2042,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             # Only update cost if will buy or purchased
             if buyingstatus == "Will Buy" or buyingstatus == "Purchased":
                 self.total_cost += float(cost) * int(quantity)
-
+        
         sql = "UPDATE budget SET totalcost=(?)"
         res= self.cursor.execute(sql, (self.total_cost,))
         self.conn.commit()
-
+        
     def update_cupfam_db(self):
         update_his_name = self.his_ent.get()
         update_her_name = self.her_ent.get()
@@ -2005,7 +2070,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         try:
             self.cursor.execute("""CREATE VIRTUAL TABLE peoplesearch USING fts4(ID, firstname, lastname, address, phone, relationship, family, bibleschool, \
                                 numberofpeople, status, job, tablenumber, notes)""")
-            self.cursor.execute("""CREATE VIRTUAL TABLE itemsearch USING fts4(ID, item, description, cost, quantityneeded, whereneeded, buyingstatus, importance, notes)""")
+            self.cursor.execute("""CREATE VIRTUAL TABLE itemsearch USING fts4(ID, item, description, cost, quantityneeded, whereneeded, buyingstatus, importance, store, notes)""")
+            self.cursor.execute("""CREATE VIRTUAL TABLE todosearch USING fts4(ID, task, whereneeded, importance, category, person, status, notes)""")
             
             self.conn.commit()
         except:
@@ -2022,13 +2088,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         res = self.cursor.execute(sql)
         sql = "INSERT INTO itemsearch SELECT * FROM items"
         res = self.cursor.execute(sql)
+        sql = "INSERT INTO todosearch SELECT * FROM tasks"
+        res = self.cursor.execute(sql)
         self.conn.commit()
         
         sql = "SELECT * FROM peoplesearch WHERE (firstname || ' ' || lastname) LIKE ('%' || ? || '%') OR address LIKE ('%' || ? || '%') OR phone LIKE ('%' || ? || '%') \
                 OR relationship LIKE ('%' || ? || '%') OR family LIKE ('%' || ? || '%') OR numberofpeople LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
-        
         sql_items = "SELECT * FROM itemsearch WHERE item LIKE ('%' || ? || '%') OR description LIKE ('%' || ? || '%') OR whereneeded LIKE ('%' || ? || '%') OR buyingstatus LIKE ('%' || ? || '%') \
                 OR importance LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
+        sql_todos = "SELECT * FROM todosearch WHERE task LIKE ('%' || ? || '%') OR whereneeded LIKE ('%' || ? || '%') OR importance LIKE ('%' || ? || '%') OR category LIKE ('%' || ? || '%') \
+                     OR person LIKE ('%' || ? || '%') OR status LIKE ('%' || ? || '%') OR notes LIKE ('%' || ? || '%')"
 
         if search == self.search:
             
@@ -2071,14 +2140,29 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 for row in res:
                     self.search_tree.insert('', 'end', tags=[row[6]], values=[row[1], row[2], row[3], row[4], row[5], row[6], row[7]])
                 
+                ### if still no results check todo's
+                if len(self.search_tree.get_children()) == 0:
+                    res = self.cursor.execute(sql_todos, (results, results, results, results, results, results, results))
+                    
+                    self.search_tree = ttk.Treeview(self.tree_cols, columns=self.todo_dataCols, show= 'headings')
 
-                sql = "DROP TABLE peoplesearch"
-                self.cursor.execute(sql)
-                self.conn.commit()
+                    self.create_search_columns(self.todo_dataCols, self.tree_cols)           
 
-                sql = "DROP TABLE itemsearch"
-                self.cursor.execute(sql)
-                self.conn.commit()
+                    for row in res:
+                        self.search_tree.insert('', 'end', tags=[row[6]], values=[row[1], row[2], row[3], row[4], row[5], row[6]])
+
+                    sql = "DROP TABLE peoplesearch"
+                    self.cursor.execute(sql)
+                    self.conn.commit()
+
+                    sql = "DROP TABLE itemsearch"
+                    self.cursor.execute(sql)
+                    self.conn.commit()
+
+                    sql = "DROP TABLE todosearch"
+                    self.cursor.execute(sql)
+                    self.conn.commit()
+                
             else:
             
                 sql = "DROP TABLE peoplesearch"
@@ -2086,6 +2170,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 self.conn.commit()
 
                 sql = "DROP TABLE itemsearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
+
+                sql = "DROP TABLE todosearch"
                 self.cursor.execute(sql)
                 self.conn.commit()
             
@@ -2112,19 +2200,38 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 for row in res:
                     self.search_tree.insert('', 'end', tags=[row[6]], values=[row[1], row[2], row[3], row[4], row[5], row[6], row[7]])
 
-                sql = "DROP TABLE peoplesearch"
-                self.cursor.execute(sql)
-                self.conn.commit()
+                if len(self.search_tree.get_children()) == 0:
+                    
+                    res = self.cursor.execute(sql_todos, (sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, sear_win_results, \
+                                                          sear_win_results))
+                
+                    self.search_tree = ttk.Treeview(self.tree_cols, columns=self.todo_dataCols, show= 'headings')
+                    self.create_search_columns(self.todo_dataCols, self.tree_cols)
 
-                sql = "DROP TABLE itemsearch"
-                self.cursor.execute(sql)
-                self.conn.commit()
+                    for row in res:
+                        self.search_tree.insert('', 'end', tags=[row[6]], values=[row[1], row[2], row[3], row[4], row[5], row[6]])
+
+                    sql = "DROP TABLE peoplesearch"
+                    self.cursor.execute(sql)
+                    self.conn.commit()
+
+                    sql = "DROP TABLE itemsearch"
+                    self.cursor.execute(sql)
+                    self.conn.commit()
+
+                    sql = "DROP TABLE todosearch"
+                    self.cursor.execute(sql)
+                    self.conn.commit()
             else:
                 sql = "DROP TABLE peoplesearch"
                 self.cursor.execute(sql)
                 self.conn.commit()
 
                 sql = "DROP TABLE itemsearch"
+                self.cursor.execute(sql)
+                self.conn.commit()
+
+                sql = "DROP TABLE todosearch"
                 self.cursor.execute(sql)
                 self.conn.commit()
 
