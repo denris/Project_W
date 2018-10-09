@@ -287,16 +287,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.reception_instructions.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
 
         ### Loading initial data when app is run
-        self.load_budget_data()
-        self.load_store_data()
-        self.load_job_data()
-        self.load_table_data()
-        self.load_tables_data()
-        self.load_cupfam_data()
-        self.load_item_data()
-        self.load_task_data()
-        self.load_people_data()
-        self.load_formatted_jobs()
+        self.load_all_data()
 
     #========================Creating Methods=========================================================================
 
@@ -585,7 +576,19 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         for row in res:
             if row[0] not in self.stores:
-                self.stores.append(row[0])     
+                self.stores.append(row[0])
+
+    def load_all_data(self):   
+        self.load_budget_data()
+        self.load_store_data()
+        self.load_job_data()
+        self.load_table_data()
+        self.load_tables_data()
+        self.load_cupfam_data()
+        self.load_item_data()
+        self.load_task_data()
+        self.load_people_data()
+        self.load_formatted_jobs()
 
     def sort_data(self, tree, col, descending=False):
         # grab values to sort as a list of tuples (column value, column id)
@@ -2254,8 +2257,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_store_data()
            
     def add_person(self):
+        
         self.add_person_window()
-
+        while self.person_window:
+            if self.status.get() == "Invited":
+                self.status_listbox.configure(foreground="purple")
+            elif self.status.get() == "Coming":
+                self.status_listbox.configure(foreground="green")
+            
     def add_item(self):
         self.add_item_window()
 
