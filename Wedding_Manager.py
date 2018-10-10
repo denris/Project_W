@@ -289,7 +289,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         ### Loading initial data when app is run
         self.load_all_data()
 
-    #========================Creating Methods=========================================================================
+    #========================Creating Methods========================================================================
 
     def create_columns(self, dataCols, columns, tree):
         columns.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
