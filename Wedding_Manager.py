@@ -314,6 +314,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         ### Load all needed application data
         tree.tag_configure("Invited", foreground='purple')
         tree.tag_configure("Coming", foreground='green')
+        tree.tag_configure("Might Invite", foreground='yellow')
+        tree.tag_configure("Not Coming", foreground='red')
         tree.tag_configure("Low", foreground='green')
         tree.tag_configure("Medium", foreground='yellow')
         tree.tag_configure("High", foreground='red')
@@ -334,6 +336,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         ### Configure Tags
         self.search_tree.tag_configure("Invited", foreground='purple')
         self.search_tree.tag_configure("Coming", foreground='green')
+        self.search_tree.tag_configure("Might Invite", foreground='yellow')
+        self.search_tree.tag_configure("Not Coming", foreground='red')
         self.search_tree.tag_configure("Low", foreground='green')
         self.search_tree.tag_configure("Medium", foreground='yellow')
         self.search_tree.tag_configure("High", foreground='red')
@@ -686,13 +690,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tablenum_box.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
         self.table.set(0)
         self.tablenum_box.grid(row=5, column=2, sticky="w")
-        
+                    
         self.status = Tk.StringVar(self.middle_frame)
         self.status_label = Tk.Label(self.middle_frame, text="Status:", foreground="white", background="gray12")
         self.status_label.grid(row=1, column=2, sticky="w")
-        self.status_listbox = Tk.OptionMenu(self.middle_frame, self.status, "Invited", "Might Invite", "Coming", "Not Coming")
-        self.status_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
+        self.status_listbox = Tk.OptionMenu(self.middle_frame,self.status, "Invited", "Might Invite", "Coming", "Not Coming", command=lambda event: self.update_optionmenu(self.status, self.status_listbox))
         self.status.set("Invited")
+        self.status_listbox.configure(highlightbackground="black", foreground="purple", background="gray12", width=12)
         self.status_listbox.grid(row=1, column=3, sticky="w")
 
         self.people_nlabel = Tk.Label(self.bottom_frame, text="Notes:", foreground="white", background="gray12")
@@ -988,9 +992,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.status = Tk.StringVar(self.middle_frame)
         self.status_label = Tk.Label(self.middle_frame, text="Status:", foreground="white", background="gray12")
         self.status_label.grid(row=1, column=2, sticky="w")
-        self.status_listbox = Tk.OptionMenu(self.middle_frame, self.status, "Invited", "Might Invite", "Coming", "Not Coming")
-        self.status_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=12)
-        self.status.set("Invited")
+        self.status_listbox = Tk.OptionMenu(self.middle_frame,self.status, "Invited", "Might Invite", "Coming", "Not Coming", command=lambda event: self.update_optionmenu(self.status, self.status_listbox))
+        self.status_listbox.configure(highlightbackground="black", background="gray12", width=12)
+        self.status.set(status)
+        self.update_optionmenu(self.status, self.status_listbox) ### Set the Update Color
         self.status_listbox.grid(row=1, column=3, sticky="w")
 
         self.people_nlabel = Tk.Label(self.bottom_frame, text="Notes:", foreground="white", background="gray12")
@@ -2068,6 +2073,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.load_cupfam_data()
 
+    def update_optionmenu(self, variable, listbox, event=None):
+        print variable.get()
+        if variable.get() == "Invited":
+            listbox.configure(foreground="purple")
+        elif variable.get() == "Coming":
+            listbox.configure(foreground="green")
+        elif variable.get() == "Might Invite":
+            listbox.configure(foreground="yellow")
+        elif variable.get() == "Not Coming":
+            listbox.configure(foreground="red")
+
     def search_db(self, event, search):
         
         try:
@@ -2257,13 +2273,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_store_data()
            
     def add_person(self):
-        
         self.add_person_window()
-        while self.person_window:
-            if self.status.get() == "Invited":
-                self.status_listbox.configure(foreground="purple")
-            elif self.status.get() == "Coming":
-                self.status_listbox.configure(foreground="green")
             
     def add_item(self):
         self.add_item_window()
@@ -2293,8 +2303,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.close()
         
     
-        
-        
 def main():     
         
     win = Tk.Tk()
