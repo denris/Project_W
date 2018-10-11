@@ -150,6 +150,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.store_img = Tk.PhotoImage(file='store_img.gif'), image=self.store_img
         self.store_button = Tk.Button(self.toolbar, text="Stores", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_store)
         self.store_button.pack(side="left")
+
+        self.separator2 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
+        self.separator2.pack(side="left", fill=Tk.BOTH, padx=2)
+
+        #self.del_people_button = Tk.PhotoImage(file='store_img.gif'), image=self.store_img
+        self.del_people_button = Tk.Button(self.toolbar, text="Del Person", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.del_people)
+        self.del_people_button.pack(side="left")
         
         #======================== Main Frame=========================================================================
         
@@ -324,7 +331,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         tree.tag_configure("Done", foreground='green')
         
         tree.bind("<Double-1>", lambda event, arg=tree: self.OnDoubleClick(event, arg))
-        tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg))    
+        tree.bind("<Return>", lambda event, arg=tree: self.OnDoubleClick(event, arg)) 
         
     def create_search_columns(self, dataCols, columns):
         columns.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
@@ -1370,9 +1377,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         try:
             selection = tree.item(tree.selection())['values'][0]
             selection1 = tree.item(tree.selection())['values'][1]
+            selection2 = tree.item(tree.selection())['values'][2]
 
-            sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?)"
-            self.peoplerowid = self.cursor.execute(sql, (selection, selection1))
+            sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?) AND phone=(?)"
+            self.peoplerowid = self.cursor.execute(sql, (selection, selection1, selection2))
             self.conn.commit()
             sql = "SELECT * FROM people WHERE ID=(?)"
             for row in self.peoplerowid:
@@ -2287,6 +2295,31 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def add_store(self):
         self.add_delete_store_window()
 
+    def del_people(self):
+        people_trees = [self.all_people, self.bp_people, self.family_people, self.bibleschool_people, self.jobs_people]
+        keys = range(len(people_trees))
+        values = []
+        for tree in people_trees:
+            values.append(tree.selection())
+        selections = dict(zip(keys,values))
+        #print selections
+        current = self.tabControl.index(self.tabControl.select())
+        if self.tabControl.tab(current, 'text') == 'People':
+            selection = self.all_people.item(selections[0])['values'][0]
+            selection1 = self.all_people.item(selections[0])['values'][1]
+            selection2 = self.all_people.item(selections[0])['values'][2]
+            sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?) AND phone=(?)"
+            peoplerowid = self.cursor.execute(sql, (selection, selection1, selection2))
+            self.conn.commit()
+            for row in peoplerowid:
+                sql = "DELETE FROM people WHERE ID=(?)"
+                self.cursor.execute(sql, (row[0],))
+                self.conn.commit()
+            
+        else:
+            print "nope"
+        self.load_people_data()
+        
     def update_window_title(self, window, firstname, lastname):
         window.wm_title(" " + firstname + " " + lastname)
         
