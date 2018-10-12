@@ -154,9 +154,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.separator2 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator2.pack(side="left", fill=Tk.BOTH, padx=2)
 
-        #self.del_people_button = Tk.PhotoImage(file='store_img.gif'), image=self.store_img
+        #self.del_person_img = Tk.PhotoImage(file='del_person_img.gif'), image=self.del_person_img
         self.del_people_button = Tk.Button(self.toolbar, text="Del Person", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.del_people)
         self.del_people_button.pack(side="left")
+
+        #self.del_item_button = Tk.PhotoImage(file='item_img.gif'), image=self.item_img
+        self.del_item_button = Tk.Button(self.toolbar, text="Del Item", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.del_item)
+        self.del_item_button.pack(side="left")
         
         #======================== Main Frame=========================================================================
         
@@ -385,7 +389,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         except:
             pass
         try:
-            self.bibleschool_people.delete(*self.bp_people.get_children())
+            self.bibleschool_people.delete(*self.bibleschool_people.get_children())
         except:
             pass
 
@@ -2302,12 +2306,21 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for tree in people_trees:
             values.append(tree.selection())
         selections = dict(zip(keys,values))
-        #print selections
+        print selections
         current = self.tabControl.index(self.tabControl.select())
-        if self.tabControl.tab(current, 'text') == 'People':
-            selection = self.all_people.item(selections[0])['values'][0]
-            selection1 = self.all_people.item(selections[0])['values'][1]
-            selection2 = self.all_people.item(selections[0])['values'][2]
+        print self.all_people.item(selections[0][0])['values']
+        print self.all_people.item(selections[0][1])['values']
+        def del_from_tree():
+            counter = 0
+            for tree in people_trees:
+                try:
+                    selection = tree.item(selections[counter])['values'][0]
+                    selection1 = tree.item(selections[counter])['values'][1]
+                    selection2 = tree.item(selections[counter])['values'][2]
+                except:
+                    print "Not all people"
+                counter += 1
+            
             sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?) AND phone=(?)"
             peoplerowid = self.cursor.execute(sql, (selection, selection1, selection2))
             self.conn.commit()
@@ -2315,10 +2328,35 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 sql = "DELETE FROM people WHERE ID=(?)"
                 self.cursor.execute(sql, (row[0],))
                 self.conn.commit()
-            
-        else:
-            print "nope"
-        self.load_people_data()
+                self.load_people_data()
+
+        # if self.tabControl.tab(current, 'text') == 'People':
+        #     del_from_tree()
+        # elif self.tabControl.tab(current, 'text') == 'Bridal Party':
+        #     del_from_tree()
+        # elif self.tabControl.tab(current, 'text') == 'Family':
+        #     del_from_tree()
+        # elif self.tabControl.tab(current, 'text') == 'Bible School':
+        #     del_from_tree()
+        # elif self.tabControl.tab(current, 'text') == 'Jobs':
+        #     del_from_tree()
+        # else:
+        #     tkMessageBox.showerror("Error","Please select a Person and try again.")
+
+    def del_item(self):
+        pass
+        # selection = tree.item(tree.selection())['values'][0]
+        # selection1 = tree.item(tree.selection())['values'][1]
+
+        # sql = "SELECT ID FROM items WHERE item=(?) AND description=(?)"
+        # itemrowid = self.cursor.execute(sql, (selection, selection1))
+        # self.conn.commit()
+        # for row in itemrowid:
+        #     sql = "DELETE FROM items WHERE ID=(?)"
+        #     self.cursor.execute(sql, (row[0],))
+        #     self.conn.commit()
+        #     self.load_item_data()
+        
         
     def update_window_title(self, window, firstname, lastname):
         window.wm_title(" " + firstname + " " + lastname)
