@@ -16,7 +16,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         Tk.PhotoImage.__init__(self)
         self.master = master
         
-        master.geometry("1250x850")    
+        master.geometry("1450x850")    
         master.title("Wedding Central") # Add a title
         master.configure(background="gray")
         #master.attributes('-topmost', 'true')
