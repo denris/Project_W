@@ -16,7 +16,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         Tk.PhotoImage.__init__(self)
         self.master = master
         
-        master.geometry("1000x600")    
+        master.geometry("1200x800")    
         master.title("Wedding Central") # Add a title
         master.configure(background="gray")
         #master.attributes('-topmost', 'true')
@@ -47,6 +47,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.str_total_cost = "0.00"
         self.budget = 0.00
         self.str_budget= "0.00"
+        self.people_invited = 0
+        self.people_coming = 0
         self.his = ""
         self.her = ""
         self.old_firstname = ""
@@ -170,14 +172,27 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.bottom_frame = Tk.Frame(master, background="gray25") ### Frame for Budget/Cost
         self.bottom_frame.pack(side="bottom", fill=Tk.X)
         
+        
+        self.bottom_frame.grid_columnconfigure(4, weight=2)
+        self.bottom_frame.grid_columnconfigure(6, weight=2)
+        
         ### Fill bottom_frame ###
         self.total_cost_price_label = Tk.Label(self.bottom_frame, text="${:.2f}".format(self.total_cost), foreground="white", background="gray25", font=("Arial", 16,"bold"))
-        self.total_cost_price_label.pack(side="right")
+        self.total_cost_price_label.grid(row=0, column=10, sticky="e")
         self.total_cost_label = Tk.Label(self.bottom_frame, text="Total Cost:", foreground="white", background="gray25", font=("Arial", 14,"bold"))
-        self.total_cost_label.pack(side="right")
-        
+        self.total_cost_label.grid(row=0, column=9, sticky="w")
+
         self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), foreground="white", background="gray25", font=("Arial", 16,"bold"))
-        self.budget_label.pack(side="left")
+        self.budget_label.grid(row=0, column=0, sticky="w")
+        
+        self.invited_label = Tk.Label(self.bottom_frame, text="Invited: {}".format(self.people_invited), foreground="purple", background="gray25", font=("Arial", 16,"bold"))
+        self.invited_label.grid(row=0, column=4, sticky="e")
+        
+        self.divider1 = Tk.Label(self.bottom_frame, text=" : ", foreground="white", background="gray25", font=("Arial", 16,"bold"))
+        self.divider1.grid(row=0, column=5, sticky="we")
+        
+        self.coming_label = Tk.Label(self.bottom_frame, text="Coming: {}".format(self.people_coming), foreground="green", background="gray25", font=("Arial", 16,"bold"))
+        self.coming_label.grid(row=0, column=6, sticky="w")
         
         
         #=================================================================================================
@@ -393,9 +408,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         except:
             pass
 
+        self.people_invited = 0
+        self.people_coming = 0
         sql = "SELECT firstname, lastname, phone, numberofpeople, status, job, relationship, family, bibleschool FROM people"
         res = self.cursor.execute(sql)
-        self.conn.commit()
+        
         for row in res:
             firstname = row[0]
             lastname = row[1]
@@ -407,8 +424,16 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             family = row[7]
             bibleschool = row[8]
             
+            ### load how many are invited - want to show invited as long as not "Might Invite"
+            if status != "Might Invite":
+                self.people_invited += numberofpeople
+            ### load how many are coming
+            if status == "Coming":
+                self.people_coming += numberofpeople
+                
+            self.invited_label.configure(text="Invited: {}".format(self.people_invited))
+            self.coming_label.configure(text="Coming: {}".format(self.people_coming))
             self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
-            
             
             try: 
                 if family != "None":
@@ -2308,8 +2333,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         selections = dict(zip(keys,values))
         print selections
         current = self.tabControl.index(self.tabControl.select())
-        print self.all_people.item(selections[0][0])['values']
-        print self.all_people.item(selections[0][1])['values']
+        
         def del_from_tree():
             counter = 0
             for tree in people_trees:
@@ -2319,29 +2343,40 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     selection2 = tree.item(selections[counter])['values'][2]
                 except:
                     print "Not all people"
+                
+                try:
+                    selection = tree.item(selections[counter][counter])['values'][0]
+                    selection1 = tree.item(selections[counter][counter])['values'][1]
+                    selection2 = tree.item(selections[counter][counter])['values'][2]
+                    print selection
+                    print selection1
+                    print selection2
+                except:
+                    print "Not all people"
                 counter += 1
-            
+            print self.all_people.item(selections[0][0])['values']
+            print self.all_people.item(selections[0][1])['values']
             sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?) AND phone=(?)"
             peoplerowid = self.cursor.execute(sql, (selection, selection1, selection2))
-            self.conn.commit()
+            
             for row in peoplerowid:
                 sql = "DELETE FROM people WHERE ID=(?)"
                 self.cursor.execute(sql, (row[0],))
                 self.conn.commit()
                 self.load_people_data()
 
-        # if self.tabControl.tab(current, 'text') == 'People':
-        #     del_from_tree()
-        # elif self.tabControl.tab(current, 'text') == 'Bridal Party':
-        #     del_from_tree()
-        # elif self.tabControl.tab(current, 'text') == 'Family':
-        #     del_from_tree()
-        # elif self.tabControl.tab(current, 'text') == 'Bible School':
-        #     del_from_tree()
-        # elif self.tabControl.tab(current, 'text') == 'Jobs':
-        #     del_from_tree()
-        # else:
-        #     tkMessageBox.showerror("Error","Please select a Person and try again.")
+        if self.tabControl.tab(current, 'text') == 'People':
+            del_from_tree()
+        elif self.tabControl.tab(current, 'text') == 'Bridal Party':
+            del_from_tree()
+        elif self.tabControl.tab(current, 'text') == 'Family':
+            del_from_tree()
+        elif self.tabControl.tab(current, 'text') == 'Bible School':
+            del_from_tree()
+        elif self.tabControl.tab(current, 'text') == 'Jobs':
+            del_from_tree()
+        else:
+            tkMessageBox.showerror("Error","Please select a Person and try again.")
 
     def del_item(self):
         pass
