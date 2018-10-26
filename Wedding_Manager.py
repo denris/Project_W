@@ -49,6 +49,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.str_budget= "0.00"
         self.people_invited = 0
         self.people_coming = 0
+        self.number_tasks = 0
+        self.completed_tasks = 0
+        self.percent_task = 0.0
         self.his = ""
         self.her = ""
         self.old_firstname = ""
@@ -126,8 +129,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.add_item_button = Tk.Button(self.toolbar, text="Add Item", font=("Ariel", 8), image=self.item_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_item)
         self.add_item_button.pack(side="left")
 
-        #self.todo_img = Tk.PhotoImage(file='add_item.gif') , image=self.todo
-        self.add_todo_button = Tk.Button(self.toolbar, text="Add ToDo", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_todo)
+        self.todo_img = Tk.PhotoImage(file='add_task.gif')
+        self.add_todo_button = Tk.Button(self.toolbar, text="Add ToDo", font=("Ariel", 8), image=self.todo_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_todo)
         self.add_todo_button.pack(side="left")
         
         self.separator1 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
@@ -137,32 +140,36 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.cupfam_button = Tk.Button(self.toolbar, text="Couple", font=("Ariel", 8), image=self.cupfam_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_cupfam_window(self.his, self.her, self.his_dad_fam, self.her_dad_fam, self.his_mom_fam, self.her_mom_fam))
         self.cupfam_button.pack(side="left")
 
-        #self.bug_img = Tk.PhotoImage(file="budget.gif"), image=self.budget_img
-        self.budget_button = Tk.Button(self.toolbar, text="Budget", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_budget_window(self.budget))
+        self.budget_img = Tk.PhotoImage(file="budget.gif")
+        self.budget_button = Tk.Button(self.toolbar, text="Budget", font=("Ariel", 8), image=self.budget_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_budget_window(self.budget))
         self.budget_button.pack(side="left")
 
-        #self.job_img = Tk.PhotoImage(file='job_img.gif'), image=self.job_img
-        self.jobs_button = Tk.Button(self.toolbar, text="Jobs", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
+        self.job_img = Tk.PhotoImage(file='jobs.gif')
+        self.jobs_button = Tk.Button(self.toolbar, text="Jobs", font=("Ariel", 8), image=self.job_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_job)
         self.jobs_button.pack(side="left")
 
-        #self.tables_img = Tk.PhotoImage(file='tables_img.gif'), image=self.tables_img
-        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_tableinfo_window(self.tables, self.table_num_pep))
+        self.tables_img = Tk.PhotoImage(file='tables.gif')
+        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 8), image=self.tables_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_tableinfo_window(self.tables, self.table_num_pep))
         self.tables_button.pack(side="left")
 
-        #self.store_img = Tk.PhotoImage(file='store_img.gif'), image=self.store_img
-        self.store_button = Tk.Button(self.toolbar, text="Stores", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_store)
+        self.store_img = Tk.PhotoImage(file='stores.gif')
+        self.store_button = Tk.Button(self.toolbar, text="Stores", font=("Ariel", 8), image=self.store_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.add_store)
         self.store_button.pack(side="left")
 
         self.separator2 = ttk.Separator(self.toolbar, orient=Tk.VERTICAL)
         self.separator2.pack(side="left", fill=Tk.BOTH, padx=2)
 
-        #self.del_person_img = Tk.PhotoImage(file='del_person_img.gif'), image=self.del_person_img
-        self.del_people_button = Tk.Button(self.toolbar, text="Del Person", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.del_people)
+        self.del_person_img = Tk.PhotoImage(file='del_person.gif')
+        self.del_people_button = Tk.Button(self.toolbar, text="Del Person", font=("Ariel", 8), image=self.del_person_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.del_people)
         self.del_people_button.pack(side="left")
 
-        #self.del_item_button = Tk.PhotoImage(file='item_img.gif'), image=self.item_img
-        self.del_item_button = Tk.Button(self.toolbar, text="Del Item", font=("Ariel", 8), highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.del_item)
+        self.del_item_img = Tk.PhotoImage(file='del_item.gif')
+        self.del_item_button = Tk.Button(self.toolbar, text="Del Item", font=("Ariel", 8), image=self.del_item_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.del_item)
         self.del_item_button.pack(side="left")
+
+        self.del_todo_img = Tk.PhotoImage(file='del_todo.gif')
+        self.del_todo_button = Tk.Button(self.toolbar, text="Del To Do", font=("Ariel", 8), image=self.del_todo_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=self.del_todo)
+        self.del_todo_button.pack(side="left")
         
         #======================== Main Frame=========================================================================
         
@@ -173,28 +180,32 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.bottom_frame.pack(side="bottom", fill=Tk.X)
         
         
-        self.bottom_frame.grid_columnconfigure(4, weight=2)
-        self.bottom_frame.grid_columnconfigure(6, weight=2)
+        self.bottom_frame.grid_columnconfigure(4, weight=1)
+        self.bottom_frame.grid_columnconfigure(6, weight=1)
         
         ### Fill bottom_frame ###
-        self.total_cost_price_label = Tk.Label(self.bottom_frame, text="${:.2f}".format(self.total_cost), foreground="white", background="gray25", font=("Arial", 16,"bold"))
-        self.total_cost_price_label.grid(row=0, column=10, sticky="e")
-        self.total_cost_label = Tk.Label(self.bottom_frame, text="Total Cost:", foreground="white", background="gray25", font=("Arial", 14,"bold"))
-        self.total_cost_label.grid(row=0, column=9, sticky="w")
-
-        self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), foreground="white", background="gray25", font=("Arial", 16,"bold"))
-        self.budget_label.grid(row=0, column=0, sticky="w")
+        # self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), foreground="white", background="gray25", font=("Arial", 16,"bold"))
+        # self.budget_label.grid(row=0, column=0, sticky="w")
         
+        self.total_cost_label = Tk.Label(self.bottom_frame, text="Total Cost:", foreground="white", background="gray25", font=("Arial", 14,"bold"))
+        self.total_cost_label.grid(row=0, column=0, sticky="e")
+        self.total_cost_price_label = Tk.Label(self.bottom_frame, text="${:.2f}".format(self.total_cost), foreground="white", background="gray25", font=("Arial", 16,"bold"))
+        self.total_cost_price_label.grid(row=0, column=1, sticky="w")
+
         self.invited_label = Tk.Label(self.bottom_frame, text="Invited: {}".format(self.people_invited), foreground="purple", background="gray25", font=("Arial", 16,"bold"))
         self.invited_label.grid(row=0, column=4, sticky="e")
         
-        self.divider1 = Tk.Label(self.bottom_frame, text=" : ", foreground="white", background="gray25", font=("Arial", 16,"bold"))
-        self.divider1.grid(row=0, column=5, sticky="we")
+        self.divider = Tk.Label(self.bottom_frame, text=" : ", foreground="white", background="gray25", font=("Arial", 16,"bold"))
+        self.divider.grid(row=0, column=5, sticky="we")
         
         self.coming_label = Tk.Label(self.bottom_frame, text="Coming: {}".format(self.people_coming), foreground="green", background="gray25", font=("Arial", 16,"bold"))
         self.coming_label.grid(row=0, column=6, sticky="w")
         
-        
+        self.completed_label = Tk.Label(self.bottom_frame, text="Planning Completed:", foreground="white", background="gray25", font=("Arial", 16,"bold"))
+        self.completed_label.grid(row=0, column=9, sticky="e")
+        self.planning_completed_label = Tk.Label(self.bottom_frame, text="{:.1f}%".format(self.percent_task), foreground="white", background="gray25", font=("Arial", 16,"bold"))
+        self.planning_completed_label.grid(row=0, column=10, sticky="w")
+
         #=================================================================================================
         
         self.search_frame = Tk.Frame(self.main_frame, background="black")
@@ -295,6 +306,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tabControl.add(self.oos_tab, text='Order of Service')
         self.ceremony_text = Tk.Text(self.oos_tab, font=("Arial", 18))
         self.ceremony_text.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+
+        scrollb = Tk.Scrollbar(self.ceremony_text, command=self.ceremony_text.yview)
+        scrollb.pack(side="right", fill=Tk.Y, expand=Tk.Y, anchor="e")
+        self.ceremony_text['yscrollcommand'] = scrollb.set
 
         self.formatted_jobs = ["Welcome And Prayer", "Congregational Songs", "Devotional", "Meditation", "Exchange of Vows", "Maid of Honor", "Best Man", "Bridesmaid", "Groomsman", \
                           "Ceremony Coordinators", "Ceremony Ushers", "Vocalists", "Guest Registrars", "Program Attendants", "Gift Receivers", "Reception Coordinators", "Master of Ceremonies", \
@@ -486,10 +501,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.to_do.delete(*self.to_do.get_children())
         except:
             pass
-
+        self.number_tasks = 0
+        self.completed_tasks = 0
         sql = "SELECT task, whereneeded, importance, category, person, status FROM tasks"
         res = self.cursor.execute(sql)
-        self.conn.commit()
 
         for row in res:
             task = row[0]
@@ -498,6 +513,20 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             category = row[3]
             person = row[4]
             status = row[5]
+
+            self.number_tasks += 1
+
+            if status == "Done":
+                self.completed_tasks += 1
+
+            self.percent_task = (float(self.completed_tasks) / self.number_tasks) * 100
+            self.planning_completed_label.config(text="{:.1f}%".format(self.percent_task))
+            if int(self.percent_task) >= 0 and int(self.percent_task) <= 49:
+                self.planning_completed_label.config(foreground="red")
+            elif int(self.percent_task) >= 50 and int(self.percent_task) <= 99:
+                self.planning_completed_label.config(foreground="yellow")
+            else:
+                self.planning_completed_label.config(foreground="green")
 
             try:
                 self.to_do.insert('', 'end', tags=[status], values=[task, where_need, importance, category, person, status])
@@ -526,8 +555,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         else:
             self.str_total_cost = str(self.total_cost) + "0"
             
-
-        self.budget_label.configure(text="Budget: ${}".format(self.str_budget))
+        ### Needed if displaying budget
+        #self.budget_label.configure(text="Budget: ${}".format(self.str_budget))
 
         if self.total_cost <= self.budget:
             self.total_cost_price_label.configure(fg="green", text="${}".format(self.str_total_cost))
@@ -563,15 +592,22 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def load_formatted_jobs(self):
         self.ceremony_text.delete(1.0, Tk.END)
-        
+        self.ceremony_text.tag_config("title",underline=1)
         for i in self.formatted_jobs:
             sql = "SELECT firstname,lastname,job FROM people WHERE job=(?)"
             res = self.cursor.execute(sql, (i,))
-                
+            title = True
+            if self.formatted_jobs.index(i) != 0:
+                self.ceremony_text.insert(Tk.END, "\n")
             for row in res:
-                
-                self.ceremony_text.insert(Tk.END, row[2] + ' - ' + row[0] + ' ' + row[1] + "\n")
-    
+                while title:
+                    self.ceremony_text.insert(Tk.END, row[2] + "\n", ("title"))
+                    title = False
+                # if i == "Maid of Honor":
+                #     self.ceremony_text.insert(Tk.TOP, " - " + row[0] + ' ' + row[1] + "\n")
+                # else:
+                self.ceremony_text.insert(Tk.END, " - " + row[0] + ' ' + row[1] + "\n")
+            
     def load_cupfam_data(self):
         ### Setting the family instance variables ###
         sql_coup = "SELECT * FROM couple"
@@ -850,7 +886,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.task_label = Tk.Label(self.todo_middle_frame, text="Task:", foreground="white", background="gray12")
         self.task_label.grid(row=0, column=0, sticky="w")
         self.task_ent = Tk.Entry(self.todo_middle_frame, highlightbackground="gray12", width=50)
-        self.task_ent.grid(row=0, column=1, sticky="w")
+        self.task_ent.grid(row=0, column=1, sticky="w", pady=5)
 
         ### Where Task Needed
         self.where_task_needed = Tk.StringVar(self.todo_middle_frame)
@@ -1171,7 +1207,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.task_label = Tk.Label(self.todo_middle_frame, text="Task:", foreground="white", background="gray12")
         self.task_label.grid(row=0, column=0, sticky="w")
         self.task_ent = Tk.Entry(self.todo_middle_frame, highlightbackground="gray12", width=50)
-        self.task_ent.grid(row=0, column=1, sticky="w")
+        self.task_ent.grid(row=0, column=1, sticky="w", pady=5)
 
         ### Where Task Needed
         self.where_task_needed = Tk.StringVar(self.todo_middle_frame)
@@ -2391,7 +2427,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #     self.cursor.execute(sql, (row[0],))
         #     self.conn.commit()
         #     self.load_item_data()
-        
+
+    def del_todo(self):
+        pass
         
     def update_window_title(self, window, firstname, lastname):
         window.wm_title(" " + firstname + " " + lastname)
