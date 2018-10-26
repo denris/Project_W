@@ -16,7 +16,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         Tk.PhotoImage.__init__(self)
         self.master = master
         
-        master.geometry("1200x800")    
+        master.geometry("1250x850")    
         master.title("Wedding Central") # Add a title
         master.configure(background="gray")
         #master.attributes('-topmost', 'true')
@@ -41,6 +41,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tablenum = 0
         self.tables = 0
         self.table_num_pep = 0
+        self.is_sections = Tk.IntVar()
         self.old_table_num_pep = self.table_num_pep
         self.stores = []
         self.total_cost = 0.00
@@ -74,7 +75,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE tables(people text, remaining int, relationship text, family text, notes text)""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
-            self.cursor.execute("""CREATE TABLE tableinfo(numtables int, numpeptable int)""")
+            self.cursor.execute("""CREATE TABLE tableinfo(numtables int, numpeptable int, sections int)""")
             
             self.conn.commit()
 
@@ -107,8 +108,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.conn.commit()
 
             ### Init Tables
-            sql = "INSERT INTO tableinfo (numtables, numpeptable) VALUES (?,?)"
-            res = self.cursor.execute(sql, (self.tables, self.table_num_pep))
+            sql = "INSERT INTO tableinfo (numtables, numpeptable, sections) VALUES (?,?,?)"
+            res = self.cursor.execute(sql, (self.tables, self.table_num_pep, self.is_sections))
             self.conn.commit()
             
             ### Add info if first time program opened
@@ -149,7 +150,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.jobs_button.pack(side="left")
 
         self.tables_img = Tk.PhotoImage(file='tables.gif')
-        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 8), image=self.tables_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_tableinfo_window(self.tables, self.table_num_pep))
+        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 8), image=self.tables_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_tableinfo_window(self.tables, self.table_num_pep, self.is_sections))
         self.tables_button.pack(side="left")
 
         self.store_img = Tk.PhotoImage(file='stores.gif')
@@ -1288,7 +1289,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.u_budget_but = Tk.Button(self.view_budget_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.update_budget_db)
         self.u_budget_but.grid(row=1, column=1, sticky="e")
         
-    def update_view_tableinfo_window(self, tables, numpeptables):
+    def update_view_tableinfo_window(self, tables, numpeptables, is_sections):
         self.view_table_window = Tk.Toplevel(self, takefocus=True, background="gray12")
         self.view_table_window.wm_title("Enter/Update Tables")
         self.view_table_window.geometry("250x100")
@@ -1305,6 +1306,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.tables_ent.insert(0, tables)
         self.numpeptable_ent.insert(0, numpeptables)
+        self.is_sections.set(is_sections)
+
+        self.is_sections = Tk.IntVar()
+        self.u_tables_sections_label = Tk.Label(self.view_table_window, text="Multiple tables\nper table:", foreground="white", background="gray12")
+        self.u_tables_sections_label.grid(row=2, column=0, sticky="w")
+        self.u_tables_sections = Tk.Checkbutton(self.view_table_window, highlightbackground="black", background="gray12", variable=self.is_sections)
+        self.u_tables_sections.grid(row=2, column=1, sticky="w")
 
         self.u_tables_but = Tk.Button(self.view_table_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.update_tableinfo_db)
         self.u_tables_but.grid(row=2, column=1, sticky="e")
@@ -1909,14 +1917,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     def update_tableinfo_db(self):
         view_tables = self.tables_ent.get() # Get number of tables
         view_numpeptable = self.numpeptable_ent.get() # Get number of people at table
+        view_sections = self.is_sections.get() # Get if multiple tables per section
 
         sql = "SELECT numpeptable FROM tableinfo"
         res = self.cursor.execute(sql)
         for row in res:
             self.old_table_num_pep = row[0]
 
-        sql = "UPDATE tableinfo SET numtables=(?), numpeptable=(?)"
-        res= self.cursor.execute(sql, (view_tables, view_numpeptable))
+        sql = "UPDATE tableinfo SET numtables=(?), numpeptable=(?), sections=(?)"
+        res= self.cursor.execute(sql, (view_tables, view_numpeptable, view_sections))
         self.conn.commit()
 
         self.load_table_data()
