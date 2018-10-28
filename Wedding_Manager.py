@@ -312,9 +312,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         scrollb.pack(side="right", fill=Tk.Y, expand=Tk.Y, anchor="e")
         self.ceremony_text['yscrollcommand'] = scrollb.set
 
-        self.formatted_jobs = ["Welcome And Prayer", "Congregational Songs", "Devotional", "Meditation", "Exchange of Vows", "Maid of Honor", "Best Man", "Bridesmaid", "Groomsman", \
+        self.formatted_jobs = ["Welcome And Prayer", "Congregational Songs", "Devotional", "Meditation", "Exchange of Vows", "Maid of Honor", "Best Man", "Bridesmaid", "Groomsman", "Bride's Assistants", \
                           "Ceremony Coordinators", "Ceremony Ushers", "Vocalists", "Guest Registrars", "Program Attendants", "Gift Receivers", "Reception Coordinators", "Master of Ceremonies", \
-                          "Prayer For Meal", "Host & Hostess", "Bridal Table Servers", "Family Table Servers", "Guest Servers", "Appetizer Servers", "Cooks", "Dishwashers", "Cleanup", "Florists", "Photography"]
+                          "Prayer For Meal", "Host & Hostess", "Bridal Table Servers", "Family Table Servers", "Special Guest Servers", "Guest Servers", "Appetizer Servers", "Cooks", "Dishwashers", "Cleanup", "Florists", "Photography"]
         
         #============================== Ceremony Tab =============================================================
         self.ceremony_tab = ttk.Frame(self.tabControl)
