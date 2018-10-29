@@ -232,13 +232,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #=============================All People Tab====================================================================
 
         self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
+        self.family_dataCols = ("First Name", "Last Name", "Family", "Num of People", "Status", "Job", "Relationship")        
         self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Store")
         self.table_dataCols = ("Number", "People", "Remaining", "relationship", "family")
         self.todo_dataCols = ("Task", "Where Needed", "Importance", "Category", "Person", "Task Status")
         
         #=============================All People Tab====================================================================
 
-        self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
         self.all_people_tab = ttk.Frame(self.tabControl) 
         self.tabControl.add(self.all_people_tab, text='People')
         self.all_people_columns = ttk.Frame(self.all_people_tab)
@@ -259,8 +259,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tabControl.add(self.family_tab, text='Family')      # Add the tab
         self.family_columns = ttk.Frame(self.family_tab)
 
-        self.family_people = ttk.Treeview(columns=self.people_dataCols, show= 'headings')
-        self.create_columns(self.people_dataCols, self.family_columns, self.family_people)
+        self.family_people = ttk.Treeview(columns=self.family_dataCols, show= 'headings')
+        self.create_columns(self.family_dataCols, self.family_columns, self.family_people)
 
         #=============================Bible School Tab====================================================================
         self.bibleschool_tab = ttk.Frame(self.tabControl)            # Create a tab 
@@ -453,17 +453,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             
             try: 
                 if family != "None":
-                    self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                    self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, family, numberofpeople, status, job, relationship])
             except:
                 pass
             try: 
                 if job != "None":
-                    self.jobs_people.insert('', 'end', tags=[job], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                    self.jobs_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             except:
                 pass
             try: 
                 if job == "Best Man" or job == "Maid of Honor" or job == "Bridesmaid" or job == "Groomsman":
-                    self.bp_people.insert('', 'end', tags=[job], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                    self.bp_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             except:
                 pass
             try: 
@@ -739,7 +739,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.n_coming = Tk.StringVar(self.middle_frame)
         self.n_coming_label = Tk.Label(self.middle_frame, text="Num Coming:", foreground="white", background="gray12")
         self.n_coming_label.grid(row=4, column=1, sticky="e")
-        self.n_coming_listbox = Tk.OptionMenu(self.middle_frame, self.n_coming, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+        self.n_coming_listbox = Tk.OptionMenu(self.middle_frame, self.n_coming, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
         self.n_coming_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
         self.n_coming.set(1)
         self.n_coming_listbox.grid(row=4, column=2, sticky="w")
@@ -1037,7 +1037,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.n_coming = Tk.StringVar(self.middle_frame)
         self.n_coming_label = Tk.Label(self.middle_frame, text="Num Coming:", foreground="white", background="gray12")
         self.n_coming_label.grid(row=4, column=1, sticky="e")
-        self.n_coming_listbox = Tk.OptionMenu(self.middle_frame, self.n_coming, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+        self.n_coming_listbox = Tk.OptionMenu(self.middle_frame, self.n_coming, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
         self.n_coming_listbox.configure(highlightbackground="black", background="gray12", foreground="white", width=5)
         self.n_coming.set(1)
         self.n_coming_listbox.grid(row=4, column=2, sticky="w")
@@ -1846,11 +1846,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_formatted_jobs() # Loading the text box in a nice format
         
         ### Dynamically update people tabs
-        self.family_people.delete(*self.family_people.get_children())
-        self.all_people.delete(*self.all_people.get_children())
-        self.jobs_people.delete(*self.jobs_people.get_children())
-        self.bp_people.delete(*self.bp_people.get_children())
-        self.bibleschool_people.delete(*self.bibleschool_people.get_children())
+        # self.family_people.delete(*self.family_people.get_children())
+        # self.all_people.delete(*self.all_people.get_children())
+        # self.jobs_people.delete(*self.jobs_people.get_children())
+        # self.bp_people.delete(*self.bp_people.get_children())
+        # self.bibleschool_people.delete(*self.bibleschool_people.get_children())
         self.load_people_data()
         ### Dynamically update the title of the person being edited
         self.update_window_title(self.view_person, update_n, update_ln)
