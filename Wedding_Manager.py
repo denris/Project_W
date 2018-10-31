@@ -40,6 +40,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.stores = []
         self.tablenum = 0
         self.tables = 0
+        self.mul_number = Tk.IntVar()
         self.table_num_pep = 0
         self.is_sections = Tk.IntVar()
         self.old_table_num_pep = self.table_num_pep
@@ -75,7 +76,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.cursor.execute("""CREATE TABLE tables(people text, remaining int, relationship text, family text, notes text)""")
             self.cursor.execute("""CREATE TABLE budget(budget real, totalcost real)""")
             self.cursor.execute("""CREATE TABLE jobs(job text, CONSTRAINT name_unique UNIQUE (job))""")
-            self.cursor.execute("""CREATE TABLE tableinfo(numtables int, numpeptable int, sections int)""")
+            self.cursor.execute("""CREATE TABLE tableinfo(numtables int, numpeptable int, sections int, multables int)""")
             
             self.conn.commit()
 
@@ -108,8 +109,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.conn.commit()
 
             ### Init Tables
-            sql = "INSERT INTO tableinfo (numtables, numpeptable, sections) VALUES (?,?,?)"
-            res = self.cursor.execute(sql, (self.tables, self.table_num_pep, self.is_sections))
+            sql = "INSERT INTO tableinfo (numtables, numpeptable, sections, multables) VALUES (?,?,?,?)"
+            res = self.cursor.execute(sql, (self.tables, self.table_num_pep, self.is_sections, self.mul_tables))
             self.conn.commit()
             
             ### Add info if first time program opened
@@ -150,7 +151,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.jobs_button.pack(side="left")
 
         self.tables_img = Tk.PhotoImage(file='tables.gif')
-        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 8), image=self.tables_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_tableinfo_window(self.tables, self.table_num_pep, self.is_sections))
+        self.tables_button = Tk.Button(self.toolbar, text="Tables", font=("Ariel", 8), image=self.tables_img, highlightbackground="gray25", compound=Tk.TOP, relief=Tk.FLAT, command=lambda: self.update_view_tableinfo_window(self.tables, self.table_num_pep, self.is_sections.get(), self.mul_number.get()))
         self.tables_button.pack(side="left")
 
         self.store_img = Tk.PhotoImage(file='stores.gif')
@@ -232,7 +233,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #=============================All People Tab====================================================================
 
         self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
-        self.family_dataCols = ("First Name", "Last Name", "Family", "Num of People", "Status", "Job", "Relationship")        
+        self.family_dataCols = ("First Name", "Last Name", "Phone", "Num of People", "Status", "Job", "Family")        
         self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Store")
         self.table_dataCols = ("Number", "People", "Remaining", "relationship", "family")
         self.todo_dataCols = ("Task", "Where Needed", "Importance", "Category", "Person", "Task Status")
@@ -308,9 +309,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.ceremony_text = Tk.Text(self.oos_tab, font=("Arial", 18))
         self.ceremony_text.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
 
-        scrollb = Tk.Scrollbar(self.ceremony_text, command=self.ceremony_text.yview)
-        scrollb.pack(side="right", fill=Tk.Y, expand=Tk.Y, anchor="e")
-        self.ceremony_text['yscrollcommand'] = scrollb.set
+        scrolla = Tk.Scrollbar(self.ceremony_text, command=self.ceremony_text.yview)
+        scrolla.pack(side="right", fill=Tk.Y, expand=Tk.Y, anchor="e")
+        self.ceremony_text['yscrollcommand'] = scrolla.set
 
         self.formatted_jobs = ["Welcome And Prayer", "Congregational Songs", "Devotional", "Meditation", "Exchange of Vows", "Maid of Honor", "Best Man", "Bridesmaid", "Groomsman", "Bride's Assistants", \
                           "Ceremony Coordinators", "Ceremony Ushers", "Vocalists", "Guest Registrars", "Program Attendants", "Gift Receivers", "Reception Coordinators", "Master of Ceremonies", \
@@ -321,12 +322,30 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tabControl.add(self.ceremony_tab, text='Ceremony')
         self.ceremony_instructions = Tk.Text(self.ceremony_tab, font=("Arial", 18))
         self.ceremony_instructions.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+
+        scrollb = Tk.Scrollbar(self.ceremony_instructions, command=self.ceremony_instructions.yview)
+        scrollb.pack(side="right", fill=Tk.Y, expand=Tk.Y, anchor="e")
+        self.ceremony_instructions['yscrollcommand'] = scrollb.set
         
         #============================== Reception Tab =============================================================
         self.reception_tab = ttk.Frame(self.tabControl)
         self.tabControl.add(self.reception_tab, text='Reception')
         self.reception_instructions = Tk.Text(self.reception_tab, font=("Arial", 18))
         self.reception_instructions.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+
+        scrollc = Tk.Scrollbar(self.reception_instructions, command=self.reception_instructions.yview)
+        scrollc.pack(side="right", fill=Tk.Y, expand=Tk.Y, anchor="e")
+        self.reception_instructions['yscrollcommand'] = scrollc.set
+
+        #============================== Reception Tab =============================================================
+        self.songs_tab = ttk.Frame(self.tabControl)
+        self.tabControl.add(self.songs_tab, text='Songs')
+        self.songs_list = Tk.Text(self.songs_tab, font=("Arial", 18))
+        self.songs_list.pack(side=Tk.TOP, fill=Tk.BOTH, expand=Tk.Y)
+
+        scrolld = Tk.Scrollbar(self.songs_list, command=self.songs_list.yview)
+        scrolld.pack(side="right", fill=Tk.Y, expand=Tk.Y, anchor="e")
+        self.songs_list['yscrollcommand'] = scrolld.set
 
         ### Loading initial data when app is run
         self.load_all_data()
@@ -449,11 +468,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 
             self.invited_label.configure(text="Invited: {}".format(self.people_invited))
             self.coming_label.configure(text="Coming: {}".format(self.people_coming))
-            self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+            if job == "None":
+                self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, "", relationship])
+            else:
+                self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             
             try: 
                 if family != "None":
-                    self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, family, numberofpeople, status, job, relationship])
+                    if job == "None":
+                        self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, phone, numberofpeople, status, "", family])
+                    else:
+                        self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, phone, numberofpeople, status, job, family])
             except:
                 pass
             try: 
@@ -468,7 +493,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 pass
             try: 
                 if bibleschool == 1:
-                    self.bibleschool_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                    if job == "None":
+                        self.bibleschool_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, "", relationship])
+                    else:
+                        self.bibleschool_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
             except:
                 pass
 
@@ -568,11 +596,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         sql = "SELECT * FROM tableinfo"
         res = self.cursor.execute(sql)
-        self.conn.commit()
         for row in res:
             self.tables = row[0]
             self.table_num_pep = row[1]
-
+            self.is_sections.set(row[2])
+            self.mul_number.set(row[3])
+            
     def load_tables_data(self):
 
         try:
@@ -582,12 +611,23 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 
         sql = "Select rowid, people, remaining, relationship, family, notes from tables"
         res = self.cursor.execute(sql)
-        self.conn.commit()
         
         for row in res:
             
             try:
-                self.all_tables.insert('', 'end', tags=[], values=[row[0], row[1], row[2], row[3], row[4]])
+                if self.is_sections.get() != 0:
+                    condition = True
+                    hello = row[1].split(",")
+                    #print hello
+                    while condition:
+                        self.all_tables.insert('', 'end', tags=[], values=[row[0], ", ".join(hello[0:self.table_num_pep]), row[2], row[3], row[4]])
+                        break
+                    counter = 0
+                    for i in range(self.mul_number.get()-1):
+                        counter += self.table_num_pep
+                        self.all_tables.insert('', 'end', tags=[], values=["", ", ".join(hello[counter:self.table_num_pep + counter]), "", row[3], row[4]])
+                else:
+                    self.all_tables.insert('', 'end', tags=[], values=[row[0], row[1], row[2], row[3], row[4]])
             except:    
                 pass
 
@@ -655,7 +695,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             if row[0] not in self.stores:
                 self.stores.append(row[0])
 
-    def load_all_data(self):   
+    def load_all_data(self):
         self.load_budget_data()
         self.load_store_data()
         self.load_job_data()
@@ -666,6 +706,26 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_task_data()
         self.load_people_data()
         self.load_formatted_jobs()
+        
+        ### Populate the text tabs except ceremony
+        try:
+            with open("Wedding Files\\ceremony.txt", "r") as file:
+                for line in file.read():
+                    self.ceremony_instructions.insert(Tk.CURRENT, line)
+        except IOError:
+            pass
+        try:
+            with open("Wedding Files\\reception.txt", "r") as file:
+                for line in file.read():
+                    self.reception_instructions.insert(Tk.CURRENT, line)
+        except IOError:
+            pass
+        try:
+            with open("Wedding Files\\songs_list.txt", "r") as file:
+                for line in file.read():
+                    self.songs_list.insert(Tk.CURRENT, line)
+        except IOError:
+            pass
 
     def sort_data(self, tree, col, descending=False):
         # grab values to sort as a list of tuples (column value, column id)
@@ -1289,10 +1349,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.u_budget_but = Tk.Button(self.view_budget_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.update_budget_db)
         self.u_budget_but.grid(row=1, column=1, sticky="e")
         
-    def update_view_tableinfo_window(self, tables, numpeptables, is_sections):
+    def update_view_tableinfo_window(self, tables, numpeptables, is_sections, is_mul):
         self.view_table_window = Tk.Toplevel(self, takefocus=True, background="gray12")
         self.view_table_window.wm_title("Enter/Update Tables")
-        self.view_table_window.geometry("250x100")
+        self.view_table_window.geometry("250x125")
 
         self.tables_label = Tk.Label(self.view_table_window, text="Num Tables:", foreground="white", background="gray12")
         self.tables_label.grid(row=0, column=0, sticky="w")
@@ -1307,15 +1367,28 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.tables_ent.insert(0, tables)
         self.numpeptable_ent.insert(0, numpeptables)
         self.is_sections.set(is_sections)
+        self.mul_number.set(is_mul)
 
-        self.is_sections = Tk.IntVar()
-        self.u_tables_sections_label = Tk.Label(self.view_table_window, text="Multiple tables\nper table:", foreground="white", background="gray12")
+        self.mul_tables_label = Tk.Label(self.view_table_window, text="Sections per\ntable:", foreground="white", background="gray12", justify="left")
+        self.mul_tables = Tk.Entry(self.view_table_window, highlightbackground="gray12", width=10, textvariable=self.mul_number)
+        
+        if is_sections == 1:
+            self.mul_tables_label.grid(row=3, column=0, sticky="w")
+            self.mul_tables.grid(row=3, column=1, sticky="w")
+        else:
+            try:
+                self.mul_tables_label.grid_remove()
+                self.mul_tables.grid_remove()
+            except:
+                pass
+
+        self.u_tables_sections_label = Tk.Label(self.view_table_window, text="Multiple tables\nper table:", foreground="white", background="gray12", justify="left")
         self.u_tables_sections_label.grid(row=2, column=0, sticky="w")
         self.u_tables_sections = Tk.Checkbutton(self.view_table_window, highlightbackground="black", background="gray12", variable=self.is_sections)
         self.u_tables_sections.grid(row=2, column=1, sticky="w")
 
         self.u_tables_but = Tk.Button(self.view_table_window, text="Submit", font=("Arial", 7, "bold"), highlightbackground="gray12", command=self.update_tableinfo_db)
-        self.u_tables_but.grid(row=2, column=1, sticky="e")
+        self.u_tables_but.grid(row=2, column=2, sticky="w")
 
     def update_view_tables_window(self, ID, people, relationship, family, notes):
         self.view_tables_window = Tk.Toplevel(self, takefocus=True)
@@ -1351,7 +1424,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.tables_people_label = Tk.Label(self.tables_middle_frame, text="People:", foreground="white", background="gray12")
         self.tables_people_label.grid(row=1, column=0, sticky="nw")
-        self.tables_people_list = Tk.Listbox(self.tables_middle_frame, height=self.table_num_pep)
+        if self.is_sections.get() == 0:
+            self.tables_people_list = Tk.Listbox(self.tables_middle_frame, height=self.table_num_pep)
+        else:
+            self.tables_people_list = Tk.Listbox(self.tables_middle_frame, height=self.table_num_pep * self.mul_number.get())
         self.tables_people_list.grid(row=1, column=1, sticky="w")
         
         self.tables_nlabel = Tk.Label(self.tables_bottom_frame, text="Notes:", foreground="white", background="gray12")
@@ -1696,115 +1772,226 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for row in res:
             self.number = row[0]
         
-        if self.number == self.tables and self.old_table_num_pep > 0:
-            sql = "SELECT remaining FROM tables"
-            res = self.cursor.execute(sql)
-            for row in res:
-                old_remaining = row[0]
-                
-                sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
-                res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
-                self.conn.commit()
-            
-            
-            different = {}
-            sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
-            res = self.cursor.execute(sql, (self.table_num_pep,))
-            for row in res:
-                different[row[1]] = row[0]
-                
-            for key, value in different.iteritems():
-                if self.old_table_num_pep > self.table_num_pep:
-                    sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
-                    update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
-                    res = self.cursor.execute(sql, (update_remaining, key))
-                    self.conn.commit()
-                elif self.old_table_num_pep < self.table_num_pep:
-                    sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
-                    update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
-                    res = self.cursor.execute(sql, (update_remaining, key))
-                    self.conn.commit()
-                else:
-                    pass
-                
-
-        elif self.number > self.tables:
-            ### Dynamic update if number tables decrease and number at table change
-            sql = "SELECT remaining FROM tables"
-            res = self.cursor.execute(sql)
-            for row in res:
-                old_remaining = row[0]
-                
-                sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
-                res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
-                self.conn.commit()
-            
-            
-            different = {}
-            sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
-            res = self.cursor.execute(sql, (self.table_num_pep,))
-            for row in res:
-                different[row[1]] = row[0]
-                
-                
-            for key, value in different.iteritems():
-                if self.old_table_num_pep > self.table_num_pep:
-                    sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
-                    update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
-                    res = self.cursor.execute(sql, (update_remaining, key))
-                    self.conn.commit()
-                elif self.old_table_num_pep < self.table_num_pep:
-                    sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
-                    update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
-                    res = self.cursor.execute(sql, (update_remaining, key))
-                    self.conn.commit()
-                else:
-                    pass
-            print "less tables"
-            for row in range((self.number - self.tables)):
-                sql = "DELETE FROM tables WHERE rowid = (SELECT MAX(rowid) FROM tables)"
+        if self.is_sections.get() == 0:
+            if self.number == self.tables and self.old_table_num_pep > 0:
+                sql = "SELECT remaining FROM tables"
                 res = self.cursor.execute(sql)
-                self.conn.commit()
-            
-           
-        else:
-            ### Dynamic update if number tables increase and number at table change
-            sql = "SELECT remaining FROM tables"
-            res = self.cursor.execute(sql)
-            for row in res:
-                old_remaining = row[0]
-                
-                sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
-                res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
-                self.conn.commit()
-            
-            
-            different = {}
-            sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
-            res = self.cursor.execute(sql, (self.table_num_pep,))
-            for row in res:
-                different[row[1]] = row[0]
-                
-                
-            for key, value in different.iteritems():
-                if self.old_table_num_pep > self.table_num_pep:
-                    sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
-                    update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
-                    res = self.cursor.execute(sql, (update_remaining, key))
+                for row in res:
+                    old_remaining = row[0]
+                    
+                    sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
+                    res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
                     self.conn.commit()
-                elif self.old_table_num_pep < self.table_num_pep:
-                    sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
-                    update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
-                    res = self.cursor.execute(sql, (update_remaining, key))
-                    self.conn.commit()
-                else:
-                    pass
-            print "more tables"
-            for row in range((self.tables - self.number)):
-                sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
-                res = self.cursor.execute(sql, ("", self.table_num_pep, "", "None", ""))
-                self.conn.commit()
+                
+                
+                different = {}
+                sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
+                res = self.cursor.execute(sql, (self.table_num_pep,))
+                for row in res:
+                    different[row[1]] = row[0]
+                    
+                for key, value in different.iteritems():
+                    if self.old_table_num_pep > self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining, key))
+                        self.conn.commit()
+                    elif self.old_table_num_pep < self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining, key))
+                        self.conn.commit()
+                    else:
+                        pass
+                    
 
+            elif self.number > self.tables:
+                ### Dynamic update if number tables decrease and number at table change
+                sql = "SELECT remaining FROM tables"
+                res = self.cursor.execute(sql)
+                for row in res:
+                    old_remaining = row[0]
+                    
+                    sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
+                    res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
+                    self.conn.commit()
+                
+                
+                different = {}
+                sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
+                res = self.cursor.execute(sql, (self.table_num_pep,))
+                for row in res:
+                    different[row[1]] = row[0]
+                    
+                    
+                for key, value in different.iteritems():
+                    if self.old_table_num_pep > self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining, key))
+                        self.conn.commit()
+                    elif self.old_table_num_pep < self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining, key))
+                        self.conn.commit()
+                    else:
+                        pass
+                print "less tables"
+                for row in range((self.number - self.tables)):
+                    sql = "DELETE FROM tables WHERE rowid = (SELECT MAX(rowid) FROM tables)"
+                    res = self.cursor.execute(sql)
+                    self.conn.commit()
+                
+            
+            else:
+                ### Dynamic update if number tables increase and number at table change
+                sql = "SELECT remaining FROM tables"
+                res = self.cursor.execute(sql)
+                for row in res:
+                    old_remaining = row[0]
+                    
+                    sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
+                    res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
+                    self.conn.commit()
+                
+                
+                different = {}
+                sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
+                res = self.cursor.execute(sql, (self.table_num_pep,))
+                for row in res:
+                    different[row[1]] = row[0]
+                    
+                    
+                for key, value in different.iteritems():
+                    if self.old_table_num_pep > self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining, key))
+                        self.conn.commit()
+                    elif self.old_table_num_pep < self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining, key))
+                        self.conn.commit()
+                    else:
+                        pass
+                print "more tables"
+                for row in range((self.tables - self.number)):
+                    sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
+                    res = self.cursor.execute(sql, ("", self.table_num_pep, "", "None", ""))
+                    self.conn.commit()
+        else:
+            ########################################################################################################
+            print "multiple tables"
+            if self.number == self.tables and self.old_table_num_pep > 0:
+                sql = "SELECT remaining FROM tables"
+                res = self.cursor.execute(sql)
+                for row in res:
+                    old_remaining = row[0]
+                    
+                    sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
+                    res = self.cursor.execute(sql, (self.table_num_pep * self.mul_number.get(), self.old_table_num_pep))
+                    self.conn.commit()
+                
+                
+                different = {}
+                sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
+                res = self.cursor.execute(sql, (self.table_num_pep,))
+                for row in res:
+                    different[row[1]] = row[0]
+                    
+                for key, value in different.iteritems():
+                    if self.old_table_num_pep > self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining * self.mul_number.get(), key))
+                        self.conn.commit()
+                    elif self.old_table_num_pep < self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining * self.mul_number.get(), key))
+                        self.conn.commit()
+                    else:
+                        pass
+                    
+
+            elif self.number > self.tables:
+                ### Dynamic update if number tables decrease and number at table change
+                sql = "SELECT remaining FROM tables"
+                res = self.cursor.execute(sql)
+                for row in res:
+                    old_remaining = row[0]
+                    
+                    sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
+                    res = self.cursor.execute(sql, (self.table_num_pep * self.mul_number.get(), self.old_table_num_pep))
+                    self.conn.commit()
+                
+                
+                different = {}
+                sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
+                res = self.cursor.execute(sql, (self.table_num_pep,))
+                for row in res:
+                    different[row[1]] = row[0]
+                    
+                    
+                for key, value in different.iteritems():
+                    if self.old_table_num_pep > self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining * self.mul_number.get(), key))
+                        self.conn.commit()
+                    elif self.old_table_num_pep < self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining * self.mul_number.get(), key))
+                        self.conn.commit()
+                    else:
+                        pass
+                print "less tables"
+                for row in range((self.number - self.tables)):
+                    sql = "DELETE FROM tables WHERE rowid = (SELECT MAX(rowid) FROM tables)"
+                    res = self.cursor.execute(sql)
+                    self.conn.commit()
+                
+            
+            else:
+                ### Dynamic update if number tables increase and number at table change
+                sql = "SELECT remaining FROM tables"
+                res = self.cursor.execute(sql)
+                for row in res:
+                    old_remaining = row[0]
+                    
+                    sql = "UPDATE tables SET remaining=(?) WHERE remaining=(?)"
+                    res = self.cursor.execute(sql, (self.table_num_pep, self.old_table_num_pep))
+                    self.conn.commit()
+                
+                
+                different = {}
+                sql = "SELECT remaining,rowid from tables WHERE remaining!=(?)"
+                res = self.cursor.execute(sql, (self.table_num_pep,))
+                for row in res:
+                    different[row[1]] = row[0]
+                    
+                    
+                for key, value in different.iteritems():
+                    if self.old_table_num_pep > self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value - (self.old_table_num_pep - self.table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining, key))
+                        self.conn.commit()
+                    elif self.old_table_num_pep < self.table_num_pep:
+                        sql = "UPDATE tables SET remaining=(?) WHERE rowid=(?)"
+                        update_remaining = value + (self.table_num_pep - self.old_table_num_pep)
+                        res = self.cursor.execute(sql, (update_remaining, key))
+                        self.conn.commit()
+                    else:
+                        pass
+                print "more tables"
+                for row in range((self.tables - self.number)):
+                    sql = "INSERT INTO tables(people, remaining, relationship, family, notes) VALUES (?,?,?,?,?)"
+                    res = self.cursor.execute(sql, ("", self.table_num_pep, "", "None", ""))
+                    self.conn.commit()
                 
         ### Reload Data
         self.load_tables_data()
@@ -1846,11 +2033,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.load_formatted_jobs() # Loading the text box in a nice format
         
         ### Dynamically update people tabs
-        # self.family_people.delete(*self.family_people.get_children())
-        # self.all_people.delete(*self.all_people.get_children())
-        # self.jobs_people.delete(*self.jobs_people.get_children())
-        # self.bp_people.delete(*self.bp_people.get_children())
-        # self.bibleschool_people.delete(*self.bibleschool_people.get_children())
+    
         self.load_people_data()
         ### Dynamically update the title of the person being edited
         self.update_window_title(self.view_person, update_n, update_ln)
@@ -1918,16 +2101,32 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         view_tables = self.tables_ent.get() # Get number of tables
         view_numpeptable = self.numpeptable_ent.get() # Get number of people at table
         view_sections = self.is_sections.get() # Get if multiple tables per section
-
+        view_multables = self.mul_number.get() # Get the number of tables in sections
+        
         sql = "SELECT numpeptable FROM tableinfo"
         res = self.cursor.execute(sql)
         for row in res:
             self.old_table_num_pep = row[0]
 
-        sql = "UPDATE tableinfo SET numtables=(?), numpeptable=(?), sections=(?)"
-        res= self.cursor.execute(sql, (view_tables, view_numpeptable, view_sections))
+        if view_sections == 1:
+            self.mul_tables_label.grid(row=3, column=0, sticky="w")
+            self.mul_tables.grid(row=3, column=1, sticky="w")
+        else:
+            print "destroy"
+            try:
+                self.mul_tables_label.grid_remove()
+                self.mul_tables.grid_remove()
+            except:
+                pass
+            
+            
+        sql = "UPDATE tableinfo SET numtables=(?), numpeptable=(?), sections=(?), multables=(?)"
+        res= self.cursor.execute(sql, (view_tables, view_numpeptable, view_sections, view_multables))
         self.conn.commit()
 
+        
+            
+            
         self.load_table_data()
         self.save_tables_db()
 
@@ -1937,9 +2136,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         view_people = self.tables_people_list.get(0, Tk.END)
         view_table_notes = self.tables_ntext.get("1.0", Tk.END)
         view_remaining = self.table_num_pep - len(view_people)
+        print view_remaining
         view_people = ", ".join(view_people)
-        
+
         sql = "UPDATE tables SET relationship=(?), family=(?), people=(?), notes=(?), remaining=(?) WHERE rowid=(?)"
+        
         res = self.cursor.execute(sql, (view_relationship, view_family, view_people, view_table_notes, view_remaining, self.tablerowid))
         self.conn.commit()
 
@@ -1956,7 +2157,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         sql = "SELECT people,rowid,remaining FROM tables"
         res = self.cursor.execute(sql)
-        self.conn.commit()
         for row in res:
             test_name = update_n + " " + update_ln
             old_people = row[0]
@@ -1967,7 +2167,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             if self.tablenum == 0 and int(update_tablenum) > 0: # If not originally at table, can update
                 sql = "SELECT people, remaining FROM tables WHERE rowid=(?)"
                 res = self.cursor.execute(sql, (update_tablenum,))
-                self.conn.commit()
                 for row in res:
                     old_people = row[0]
                     old_remaining = row[1]
@@ -1975,29 +2174,53 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         update_people = update_n + " " + update_ln
                         update_remaining = old_remaining - int(update_numofpep)
                         ### Make sure Table is not full before updating
-                        if update_remaining >= 0 and update_remaining <= self.table_num_pep:
-                            sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                            res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
-                            self.conn.commit()
-                            sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-                            res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
-                            self.conn.commit()
+                        if self.is_sections.get() == 0:
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep:
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                         else:
-                            tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep * self.mul_number.get():
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                     else:
                         update_people = old_people + ", " + update_n + " " + update_ln
                         update_remaining = old_remaining - int(update_numofpep)
-                        if update_remaining >= 0 and update_remaining <= self.table_num_pep:
-                            sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                            res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
-                            self.conn.commit()
-                            sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-                            res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
-                            self.conn.commit()
+                        if self.is_sections.get() == 0:
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep:
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                         else:
-                            tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep * self.mul_number.get():
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
             elif self.tablenum != 0 and int(update_tablenum) == 0: # Remove from table if were at and don't want there anymore
                 sql = "SELECT people, remaining FROM tables WHERE rowid=(?)"
                 res = self.cursor.execute(sql, (self.tablenum,))
@@ -2018,17 +2241,28 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         update_people = ""
                         
                     update_remaining = old_remaining + int(update_numofpep)
-                    if update_remaining >= 0 and update_remaining <= self.table_num_pep:
-                        sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                        res = self.cursor.execute(sql, (update_people, update_remaining, self.tablenum))
-                        self.conn.commit()
-                        sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-                        res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                    update_job, update_tablenum, update_notes, self.peoplerowid[0]))
-                        self.conn.commit()
+                    if self.is_sections.get() == 0:
+                        if update_remaining >= 0 and update_remaining <= self.table_num_pep:
+                            sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                            res = self.cursor.execute(sql, (update_people, update_remaining, self.tablenum))
+                            self.conn.commit()
+                            sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                            res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                            self.conn.commit()
+                        else:
+                            tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                     else:
-                        tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
-            
+                        if update_remaining >= 0 and update_remaining <= self.table_num_pep * self.mul_number.get():
+                            sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                            res = self.cursor.execute(sql, (update_people, update_remaining, self.tablenum))
+                            self.conn.commit()
+                            sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                            res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                            self.conn.commit()
+                        else:
+                            tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
             
             if test_name in list_old_people or old_name in list_old_people and int(update_tablenum) != old_table and int(update_tablenum) > 0:
                 
@@ -2044,16 +2278,29 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     if new_table_list == [u""]:
                         update_people = update_n + " " + update_ln
                         update_remaining = self.table_num_pep - int(update_numofpep)
-                        if update_remaining >= 0 and update_remaining <= self.table_num_pep:
-                            sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                            res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
-                            self.conn.commit()
-                            sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-                            res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
-                            self.conn.commit()
+                        if self.is_sections.get() == 0:
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep:
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                         else:
-                            tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep * self.mul_number.get():
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
+
                         # Remove from old table
                         if update_n + " " + update_ln == old_name:
                             list_old_people.remove(update_n + " " + update_ln)
@@ -2066,32 +2313,56 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                             update_people = ""
                         
                         update_remaining = old_remaining + int(update_numofpep)
-                        if update_remaining >= 0 and update_remaining <= self.table_num_pep:
-                            sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                            res = self.cursor.execute(sql, (update_people, update_remaining, old_table))
-                            self.conn.commit()
-                            sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-                            res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
-                            self.conn.commit()
+                        if self.is_sections.get() == 0:
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep:
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, old_table))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                         else:
-                            tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep * self.mul_number.get():
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, old_table))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
 
                     elif new_table_list != [u""]:
                         # Add to new table
                         update_people = new_table + ", " + update_n + " " + update_ln
                         
                         update_remaining = new_remaining - int(update_numofpep)
-                        if update_remaining >= 0 and update_remaining <= self.table_num_pep:
-                            sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                            res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
-                            self.conn.commit()
-                            sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-                            res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
-                            self.conn.commit()
+                        if self.is_sections.get() == 0:
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep:
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                         else:
-                            tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep * self.mul_number.get():
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, update_tablenum))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                         # Remove from old table
                         
                         if update_n + " " + update_ln == old_name:
@@ -2105,16 +2376,28 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                             update_people = ""
                         
                         update_remaining = old_remaining + int(update_numofpep)
-                        if update_remaining >= 0 and update_remaining <= self.table_num_pep:
-                            sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
-                            res = self.cursor.execute(sql, (update_people, update_remaining, old_table))
-                            self.conn.commit()
-                            sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
-                            res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                        update_job, update_tablenum, update_notes, self.peoplerowid[0]))
-                            self.conn.commit()
+                        if self.is_sections.get() == 0:
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep:
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, old_table))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                         else:
-                            tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
+                            if update_remaining >= 0 and update_remaining <= self.table_num_pep * self.mul_number.get():
+                                sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
+                                res = self.cursor.execute(sql, (update_people, update_remaining, old_table))
+                                self.conn.commit()
+                                sql = "UPDATE people SET firstname=(?), lastname=(?), address=(?), phone=(?), relationship=(?), family=(?), bibleschool=(?), numberofpeople=(?), status=(?), job=(?), tablenumber=(?), notes=(?) WHERE ID=(?)"
+                                res = self.cursor.execute(sql, (update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
+                                            update_job, update_tablenum, update_notes, self.peoplerowid[0]))
+                                self.conn.commit()
+                            else:
+                                tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
 
     def update_total_cost_db(self):
         # Reset cost so same items don't get added more than once
@@ -2450,6 +2733,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         window.destroy()
 
     def quit_main(self):
+        with open("Wedding Files\\order_of_service.txt", "w") as file:
+            file.write(self.ceremony_text.get("1.0", Tk.END))
+        with open("Wedding Files\\ceremony.txt", "w") as file:
+            file.write(self.ceremony_instructions.get("1.0", Tk.END))
+        with open("Wedding Files\\reception.txt", "w") as file:
+            file.write(self.reception_instructions.get("1.0", Tk.END))
+        with open("Wedding Files\\songs_list.txt", "w") as file:
+            file.write(self.songs_list.get("1.0", Tk.END))
+
         self.master.destroy()
         self.cursor.close()
         del self.cursor
