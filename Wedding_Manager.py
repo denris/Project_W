@@ -550,6 +550,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
             self.percent_task = (float(self.completed_tasks) / self.number_tasks) * 100
             self.planning_completed_label.config(text="{:.1f}%".format(self.percent_task))
+            
             if int(self.percent_task) >= 0 and int(self.percent_task) <= 49:
                 self.planning_completed_label.config(foreground="red")
             elif int(self.percent_task) >= 50 and int(self.percent_task) <= 99:
@@ -558,7 +559,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 self.planning_completed_label.config(foreground="green")
 
             try:
-                self.to_do.insert('', 'end', tags=[status], values=[task, where_need, importance, category, person, status])
+                if category == "None":
+                    self.to_do.insert('', 'end', tags=[status], values=[task, where_need, importance, "", person, status])
+                # elif where_need == "None":
+                #     self.to_do.insert('', 'end', tags=[status], values=[task, "", importance, category, person, status])
+                
             except:
                 pass 
             
@@ -588,9 +593,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.budget_label.configure(text="Budget: ${}".format(self.str_budget))
 
         if self.total_cost <= self.budget:
-            self.total_cost_price_label.configure(fg="green", text="${}".format(self.str_total_cost))
+            self.total_cost_price_label.configure(fg="green", text="${:.2f}".format(float(self.str_total_cost)))
         else:
-            self.total_cost_price_label.configure(fg="red", text="${}".format(self.str_total_cost))
+            self.total_cost_price_label.configure(fg="red", text="${:.2f}".format(float(self.str_total_cost)))
 
     def load_table_data(self):
         
@@ -618,7 +623,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 if self.is_sections.get() != 0:
                     condition = True
                     hello = row[1].split(",")
-                    #print hello
+                    
                     while condition:
                         self.all_tables.insert('', 'end', tags=[], values=[row[0], ", ".join(hello[0:self.table_num_pep]), row[2], row[3], row[4]])
                         break
@@ -2411,10 +2416,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             cost = row[0]
             quantity = row[1]
             buyingstatus = row[2]
+            print cost
 
             # Only update cost if will buy or purchased
-            if buyingstatus == "Will Buy" or buyingstatus == "Purchased":
-                self.total_cost += float(cost) * int(quantity)
+            # if buyingstatus == "Will Buy" or buyingstatus == "Purchased":
+            #     self.total_cost += float(cost) * int(quantity)
         
         sql = "UPDATE budget SET totalcost=(?)"
         res= self.cursor.execute(sql, (self.total_cost,))
