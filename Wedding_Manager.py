@@ -232,7 +232,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         #=============================All People Tab====================================================================
 
-        self.people_dataCols = ("First Name", "Last Name", "Phone Number", "Num of People", "Status", "Job", "Relationship")
+        self.people_dataCols = ("First Name", "Last Name", "Address", "Num of People", "Status", "Job", "Relationship")
         self.family_dataCols = ("First Name", "Last Name", "Phone", "Num of People", "Status", "Job", "Family")        
         self.items_dataCols = ("Item", "Desciption", "Cost", "Quantity", "Where Needed", "Buying Status", "Store")
         self.table_dataCols = ("Number", "People", "Remaining", "relationship", "family")
@@ -445,13 +445,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.people_invited = 0
         self.people_coming = 0
-        sql = "SELECT firstname, lastname, phone, numberofpeople, status, job, relationship, family, bibleschool FROM people"
+        sql = "SELECT firstname, lastname, address, numberofpeople, status, job, relationship, family, bibleschool FROM people"
         res = self.cursor.execute(sql)
         
         for row in res:
             firstname = row[0]
             lastname = row[1]
-            phone = row[2]
+            address = row[2]
             numberofpeople = row[3]
             status = row[4]
             job = row[5]
@@ -469,34 +469,34 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.invited_label.configure(text="Invited: {}".format(self.people_invited))
             self.coming_label.configure(text="Coming: {}".format(self.people_coming))
             if job == "None":
-                self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, "", relationship])
+                self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, address, numberofpeople, status, "", relationship])
             else:
-                self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, address, numberofpeople, status, job, relationship])
             
             try: 
                 if family != "None":
                     if job == "None":
-                        self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, phone, numberofpeople, status, "", family])
+                        self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, address, numberofpeople, status, "", family])
                     else:
-                        self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, phone, numberofpeople, status, job, family])
+                        self.family_people.insert('', 'end', tags=[family], values=[firstname, lastname, address, numberofpeople, status, job, family])
             except:
                 pass
             try: 
                 if job != "None":
-                    self.jobs_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                    self.jobs_people.insert('', 'end', tags=[status], values=[firstname, lastname, address, numberofpeople, status, job, relationship])
             except:
                 pass
             try: 
                 if job == "Best Man" or job == "Maid of Honor" or job == "Bridesmaid" or job == "Groomsman":
-                    self.bp_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                    self.bp_people.insert('', 'end', tags=[status], values=[firstname, lastname, address, numberofpeople, status, job, relationship])
             except:
                 pass
             try: 
                 if bibleschool == 1:
                     if job == "None":
-                        self.bibleschool_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, "", relationship])
+                        self.bibleschool_people.insert('', 'end', tags=[status], values=[firstname, lastname, address, numberofpeople, status, "", relationship])
                     else:
-                        self.bibleschool_people.insert('', 'end', tags=[status], values=[firstname, lastname, phone, numberofpeople, status, job, relationship])
+                        self.bibleschool_people.insert('', 'end', tags=[status], values=[firstname, lastname, address, numberofpeople, status, job, relationship])
             except:
                 pass
 
@@ -1533,7 +1533,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             selection1 = tree.item(tree.selection())['values'][1]
             selection2 = tree.item(tree.selection())['values'][2]
 
-            sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?) AND phone=(?)"
+            sql = "SELECT ID FROM people WHERE firstname=(?) AND lastname=(?) AND address=(?)"
             self.peoplerowid = self.cursor.execute(sql, (selection, selection1, selection2))
             self.conn.commit()
             sql = "SELECT * FROM people WHERE ID=(?)"
@@ -1760,6 +1760,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.load_job_data()
 
+        # Close Window
+        self.job_window.destroy()
+
     def save_store_db(self):
         save_store = self.store_ent.get() # Get Store
 
@@ -1768,6 +1771,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
 
         self.load_store_data()
+
+        # Close Window
+        self.store_window.destroy()
 
     def save_tables_db(self):
        
@@ -2049,6 +2055,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.search_tree.insert('', 'end', tags=[update_status], values=[update_n, update_ln, update_phone, update_numofpep, update_status, update_job, update_relationship])
         except:
             pass
+        
+        self.view_person.destroy()
 
     def update_item_db(self):
         update_item = self.item_ent.get() # Get Item
@@ -2077,6 +2085,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         except:
             pass
 
+
+        # Close out the window
+        self.view_item.destroy()
+
     def update_todo_db(self):
         update_task = self.task_ent.get() # Get Task
         update_whereneeded = self.where_task_needed.get() # Get Task Whereneeded
@@ -2092,6 +2104,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
         self.load_task_data()
         self.update_window_title(self.view_task, update_task, update_status)
+
+        # Close Window
+        self.todo_window.destroy()
 
     def update_budget_db(self):
         view_bugdet = self.total_budget_ent.get() # Get budget value
@@ -2416,11 +2431,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             cost = row[0]
             quantity = row[1]
             buyingstatus = row[2]
-            print cost
 
             # Only update cost if will buy or purchased
-            # if buyingstatus == "Will Buy" or buyingstatus == "Purchased":
-            #     self.total_cost += float(cost) * int(quantity)
+            if buyingstatus == "Will Buy" or buyingstatus == "Purchased":
+                if type(cost) == float or type(cost) == int:
+                    self.total_cost += float(cost) * int(quantity)
         
         sql = "UPDATE budget SET totalcost=(?)"
         res= self.cursor.execute(sql, (self.total_cost,))
@@ -2443,6 +2458,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
 
         self.load_cupfam_data()
+
+        # Close Window
+        self.view_message_window.destroy()
 
     def update_optionmenu(self, variable, listbox, event=None):
         print variable.get()
@@ -2515,7 +2533,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.create_search_columns(self.people_dataCols, self.tree_cols)
             
             for row in res:
-                self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
+                self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[3], row[8], row[9], row[10], row[5]])
             
             ### If it wasn't in people try items
             if len(self.search_tree.get_children()) == 0:
@@ -2578,7 +2596,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.create_search_columns(self.people_dataCols, self.tree_cols)
             
             for row in res:
-                self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[4], row[8], row[9], row[10], row[5]])
+                self.search_tree.insert('', 'end', tags=[row[9]], values=[row[1], row[2], row[3], row[8], row[9], row[10], row[5]])
             
             ### If not in people search items
             if len(self.search_tree.get_children()) == 0:
@@ -2634,6 +2652,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         self.load_job_data()
 
+        # Close Window
+        self.job_window.destroy()
+
     def delete_store_db(self):
         delete_store = self.store_ent.get() # Get Store
 
@@ -2642,6 +2663,9 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.conn.commit()
         
         self.load_store_data()
+
+        # Cose Window
+        self.store_window.destroy()
            
     def add_person(self):
         self.add_person_window()
