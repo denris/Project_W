@@ -1,3 +1,4 @@
+
 import Tkinter as Tk                 # imports
 import tkMessageBox
 import ttk
@@ -32,8 +33,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
     
         #=================================================================================================
         
+        
+
         self.conn = sqlite3.connect("W_management.db") # Establish Database Connection
         self.cursor = self.conn.cursor()
+
+        
+        sql = "SELECT Count(*) FROM people"
+        names = self.cursor.execute(sql).fetchone()        
         
         ### Things that will be dynamically populated ###
         self.jobs = []
@@ -51,6 +58,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.str_budget= "0.00"
         self.people_invited = 0
         self.people_coming = 0
+        self.people_not_coming = 0
         self.number_tasks = 0
         self.completed_tasks = 0
         self.percent_task = 0.0
@@ -181,11 +189,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.bottom_frame = Tk.Frame(master, background="gray25") ### Frame for Budget/Cost
         self.bottom_frame.pack(side="bottom", fill=Tk.X)
         
-        
+        self.bottom_frame.grid_columnconfigure(3, weight=1)
         self.bottom_frame.grid_columnconfigure(4, weight=1)
         self.bottom_frame.grid_columnconfigure(6, weight=1)
+        self.bottom_frame.grid_columnconfigure(7, weight=2)
         
-        ### Fill bottom_frame ###
+        #### Fill bottom_frame ###
         # self.budget_label = Tk.Label(self.bottom_frame, text="Budget: ${:.2f}".format(self.budget), foreground="white", background="gray25", font=("Arial", 16,"bold"))
         # self.budget_label.grid(row=0, column=0, sticky="w")
         
@@ -197,11 +206,17 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         self.invited_label = Tk.Label(self.bottom_frame, text="Invited: {}".format(self.people_invited), foreground="purple", background="gray25", font=("Arial", 16,"bold"))
         self.invited_label.grid(row=0, column=4, sticky="e")
         
-        self.divider = Tk.Label(self.bottom_frame, text=" : ", foreground="white", background="gray25", font=("Arial", 16,"bold"))
-        self.divider.grid(row=0, column=5, sticky="we")
+        # self.divider = Tk.Label(self.bottom_frame, text=" : ", foreground="white", background="gray25", font=("Arial", 16,"bold"))
+        # self.divider.grid(row=0, column=5, sticky="we")
         
         self.coming_label = Tk.Label(self.bottom_frame, text="Coming: {}".format(self.people_coming), foreground="green", background="gray25", font=("Arial", 16,"bold"))
-        self.coming_label.grid(row=0, column=6, sticky="w")
+        self.coming_label.grid(row=0, column=6)
+
+        # self.divider2 = Tk.Label(self.bottom_frame, text=" : ", foreground="white", background="gray25", font=("Arial", 16,"bold"))
+        # self.divider2.grid(row=0, column=6, sticky='e')
+
+        self.not_coming_label = Tk.Label(self.bottom_frame, text="Not Coming: {}".format(self.people_not_coming), foreground="red", background="gray25", font=("Arial", 16,"bold"))
+        self.not_coming_label.grid(row=0, column=7, sticky='w')
         
         self.completed_label = Tk.Label(self.bottom_frame, text="Planning Completed:", foreground="white", background="gray25", font=("Arial", 16,"bold"))
         self.completed_label.grid(row=0, column=9, sticky="e")
@@ -445,6 +460,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         self.people_invited = 0
         self.people_coming = 0
+        self.people_not_coming = 0
+        
         sql = "SELECT firstname, lastname, address, numberofpeople, status, job, relationship, family, bibleschool FROM people"
         res = self.cursor.execute(sql)
         
@@ -465,9 +482,13 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             ### load how many are coming
             if status == "Coming":
                 self.people_coming += numberofpeople
+            ### load how many are not coming
+            if status == "Not Coming":
+                self.people_not_coming += numberofpeople
                 
             self.invited_label.configure(text="Invited: {}".format(self.people_invited))
             self.coming_label.configure(text="Coming: {}".format(self.people_coming))
+            self.not_coming_label.configure(text="Not Coming: {}".format(self.people_not_coming))
             if job == "None":
                 self.all_people.insert('', 'end', tags=[status], values=[firstname, lastname, address, numberofpeople, status, "", relationship])
             else:
@@ -508,7 +529,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
         sql = "SELECT item, description, cost, quantityneeded, whereneeded, buyingstatus, store, importance FROM items WHERE item!=''"
         res = self.cursor.execute(sql)
-        self.conn.commit()
 
         for row in res:
             item = row[0]
@@ -530,8 +550,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.to_do.delete(*self.to_do.get_children())
         except:
             pass
+        
         self.number_tasks = 0
         self.completed_tasks = 0
+        
         sql = "SELECT task, whereneeded, importance, category, person, status FROM tasks"
         res = self.cursor.execute(sql)
 
@@ -584,8 +606,8 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.str_budget = str(self.budget) + "0"
             
         if len(str(self.total_cost)) >= 6:
-            self.str_total_cost = str(self.total_cost) 
-            self.str_total_cost = self.str_total_cost[:-5] + ',' + self.str_total_cost[-5:] + "0"
+            self.str_total_cost = str(self.total_cost)
+            self.str_total_cost = self.str_total_cost[:-6] + ',' + self.str_total_cost[-6:]
         else:
             self.str_total_cost = str(self.total_cost) + "0"
             
@@ -593,9 +615,10 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         #self.budget_label.configure(text="Budget: ${}".format(self.str_budget))
 
         if self.total_cost <= self.budget:
-            self.total_cost_price_label.configure(fg="green", text="${:.2f}".format(float(self.str_total_cost)))
+            #print repr(self.str_total_cost)
+            self.total_cost_price_label.configure(fg="green", text="${}".format(self.str_total_cost))
         else:
-            self.total_cost_price_label.configure(fg="red", text="${:.2f}".format(float(self.str_total_cost)))
+            self.total_cost_price_label.configure(fg="red", text="${}".format(self.str_total_cost))
 
     def load_table_data(self):
         
@@ -618,6 +641,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             self.all_tables.delete(*self.all_tables.get_children())
         except:
             pass
+        
+        sql = "SELECT count(*) FROM tables"
+        res = self.cursor.execute(sql)
+
+        for row in res:
+            self.number = row[0]
+        
+        if self.number == self.tables and self.old_table_num_pep > 0:
+            pass
                 
         sql = "Select rowid, people, remaining, relationship, family, notes from tables"
         res = self.cursor.execute(sql)
@@ -630,12 +662,12 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     hello = row[1].split(",")
                     
                     while condition:
-                        self.all_tables.insert('', 'end', tags=[], values=[row[0], ", ".join(hello[0:self.table_num_pep]), row[2], row[3], row[4]])
+                        self.all_tables.insert('', 'end', tags=[], values=[row[0], ", ".join(hello[0:(self.table_num_pep / self.mul_number.get())]), row[2], row[3], row[4]])
                         break
                     counter = 0
                     for i in range(self.mul_number.get()-1):
-                        counter += self.table_num_pep
-                        self.all_tables.insert('', 'end', tags=[], values=["", ", ".join(hello[counter:self.table_num_pep + counter]), "", row[3], row[4]])
+                        counter += self.table_num_pep / self.mul_number.get()
+                        self.all_tables.insert('', 'end', tags=[], values=["", ", ".join(hello[counter:(self.table_num_pep / self.mul_number.get()) + counter]), "", row[3], row[4]])
                 else:
                     self.all_tables.insert('', 'end', tags=[], values=[row[0], row[1], row[2], row[3], row[4]])
             except:    
@@ -719,19 +751,19 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         
         ### Populate the text tabs except ceremony
         try:
-            with open("Wedding Files\\ceremony.txt", "r") as file:
+            with open("Wedding Files/ceremony.txt", "r") as file:
                 for line in file.read():
                     self.ceremony_instructions.insert(Tk.CURRENT, line)
         except IOError:
             pass
         try:
-            with open("Wedding Files\\reception.txt", "r") as file:
+            with open("Wedding Files/reception.txt", "r") as file:
                 for line in file.read():
                     self.reception_instructions.insert(Tk.CURRENT, line)
         except IOError:
             pass
         try:
-            with open("Wedding Files\\songs_list.txt", "r") as file:
+            with open("Wedding Files/songs_list.txt", "r") as file:
                 for line in file.read():
                     self.songs_list.insert(Tk.CURRENT, line)
         except IOError:
@@ -1592,16 +1624,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
             except:
                 try:
                     selection = tree.item(tree.selection())['values'][0]
-                    selection1 = tree.item(tree.selection())['values'][3]
-                    sql = "SELECT ID FROM tasks WHERE task=(?) AND category=(?)"
+                    selection1 = tree.item(tree.selection())['values'][1]
+                    sql = "SELECT ID FROM tasks WHERE task=(?) AND whereneeded=(?)"
                     self.taskrowid = self.cursor.execute(sql, (selection, selection1))
-                    self.conn.commit()
+                    
                     sql = "SELECT * FROM tasks WHERE ID=(?)"
                     for row in self.taskrowid:
                         self.taskrowid = row
                     view = self.cursor.execute(sql, (self.taskrowid))
-                    self.conn.commit()
-
+                    
                     for info in view:
                         view_task = info[1]
                         view_where_need = info[2]
@@ -1923,8 +1954,25 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                                             update_job, update_tablenum, update_notes, self.peoplerowid[0]))
             self.conn.commit()
         else:
-            self.update_tables_people_db(self.old_firstname, self.old_lastname, update_n, update_ln, update_address, update_phone, update_relationship, update_fam, update_bibleschool, update_numofpep, update_status, \
-                                        update_job, update_tablenum, update_notes)
+            sql = "SELECT people, remaining FROM tables WHERE rowid=(?)"
+            res = self.cursor.execute(sql, (int(update_tablenum),))
+            for row in res:
+                old_people = row[0]
+                old_remaining = row[1]
+                print row
+                old_people = old_people.split()
+            sql = "UPDATE tables SET people=(?),remaining=(?) WHERE rowid=(?)"
+            ## If adding people
+            new_people = update_n + " " + update_ln
+            res = self.cursor.execute(sql, (new_people, old_remaining - int(update_numofpep), int(update_tablenum)))
+            self.conn.commit()
+            sql = "UPDATE people SET tablenumber=(?) WHERE ID=(?)"
+            res = self.cursor.execute(sql, (int(update_tablenum), self.peoplerowid[0]))
+            self.conn.commit()
+            for row in res:
+                pass
+
+            self.load_tables_data()
 
         self.load_tables_data() # Updating the tables when people are updated
         self.load_formatted_jobs() # Loading the text box in a nice format
@@ -2024,7 +2072,7 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                 self.mul_tables.grid_remove()
             except:
                 pass
-            
+        
             
         sql = "UPDATE tableinfo SET numtables=(?), numpeptable=(?), sections=(?), multables=(?)"
         res= self.cursor.execute(sql, (view_tables, view_numpeptable, view_sections, view_multables))
@@ -2081,8 +2129,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                     print "old remaining: " + str(old_remaining)
 
                     if len(old_people) == 0:
+                        print "We're here"
                         update_people = update_n + " " + update_ln
                         update_remaining = old_remaining - int(update_numofpep)
+                        print update_remaining
+                        print self.table_num_pep
                         ### Make sure Table is not full before updating
                         if update_remaining >= 0 and update_remaining <= self.table_num_pep:
                             sql = "UPDATE tables SET people=(?), remaining=(?) WHERE rowid=(?)"
@@ -2234,7 +2285,6 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
                         else:
                             tkMessageBox.showerror("Error","Can not add to table!\nPlease choose a different table before updating.")
                         
-
     def update_total_cost_db(self):
         # Reset cost so same items don't get added more than once
         self.total_cost = 0.00
@@ -2579,14 +2629,15 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         window.destroy()
 
     def quit_main(self):
-        with open("Wedding Files\\order_of_service.txt", "w") as file:
-            file.write(self.ceremony_text.get("1.0", Tk.END))
-        with open("Wedding Files\\ceremony.txt", "w") as file:
-            file.write(self.ceremony_instructions.get("1.0", Tk.END))
-        with open("Wedding Files\\reception.txt", "w") as file:
-            file.write(self.reception_instructions.get("1.0", Tk.END))
-        with open("Wedding Files\\songs_list.txt", "w") as file:
-            file.write(self.songs_list.get("1.0", Tk.END))
+        with open("Wedding Files/order_of_service.txt", "w") as file:
+            file.write(self.ceremony_text.get("1.0", Tk.END).encode("UTF-8"))
+        with open("Wedding Files/ceremony.txt", "w") as file:
+            file.write(self.ceremony_instructions.get("1.0", Tk.END).encode("UTF-8"))
+        with open("Wedding Files/reception.txt", "w") as file:
+            file.write(self.reception_instructions.get("1.0", Tk.END).encode("UTF-8"))
+        with open("Wedding Files/songs_list.txt", "w") as file:
+            file.write(self.songs_list.get("1.0", Tk.END).encode("UTF-8"))
+        
 
         self.master.destroy()
         self.cursor.close()
@@ -2602,3 +2653,4 @@ def main():
     win.mainloop()                     
     
 main()
+
