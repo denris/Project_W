@@ -598,27 +598,11 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
         for row in res_budget:
             self.budget = row[0]
             self.total_cost = row[1]            
-        
-        if len(str(self.budget)) >= 6:
-            self.str_budget = str(self.budget) 
-            self.str_budget = self.str_budget[:-5] + ',' + self.str_budget[-5:] + "0"
-        else:
-            self.str_budget = str(self.budget) + "0"
-            
-        if len(str(self.total_cost)) >= 6:
-            self.str_total_cost = str(self.total_cost)
-            self.str_total_cost = self.str_total_cost[:-6] + ',' + self.str_total_cost[-6:]
-        else:
-            self.str_total_cost = str(self.total_cost) + "0"
-            
-        ### Needed if displaying budget
-        #self.budget_label.configure(text="Budget: ${}".format(self.str_budget))
 
         if self.total_cost <= self.budget:
-            #print repr(self.str_total_cost)
-            self.total_cost_price_label.configure(fg="green", text="${}".format(self.str_total_cost))
+            self.total_cost_price_label.configure(fg="green", text="${:,.2f}".format(self.total_cost))
         else:
-            self.total_cost_price_label.configure(fg="red", text="${}".format(self.str_total_cost))
+            self.total_cost_price_label.configure(fg="red", text="${:,.2f}".format(self.total_cost))
 
     def load_table_data(self):
         
@@ -2341,15 +2325,14 @@ class Application(ttk.Frame, Tk.Frame, Tk.PhotoImage):
 
     def search_db(self, event, search):
         
-        try:
-            self.cursor.execute("""CREATE VIRTUAL TABLE peoplesearch USING fts4(ID, firstname, lastname, address, phone, relationship, family, bibleschool, \
-                                numberofpeople, status, job, tablenumber, notes)""")
-            self.cursor.execute("""CREATE VIRTUAL TABLE itemsearch USING fts4(ID, item, description, cost, quantityneeded, whereneeded, buyingstatus, importance, store, notes)""")
-            self.cursor.execute("""CREATE VIRTUAL TABLE todosearch USING fts4(ID, task, whereneeded, importance, category, person, status, notes)""")
-            
-            self.conn.commit()
-        except:
-            pass
+        
+        self.cursor.execute("""CREATE VIRTUAL TABLE IF NOT EXISTS peoplesearch USING fts4(ID, firstname, lastname, address, phone, relationship, family, bibleschool, \
+                            numberofpeople, status, job, tablenumber, notes)""")
+        self.cursor.execute("""CREATE VIRTUAL TABLE IF NOT EXISTS itemsearch USING fts4(ID, item, description, cost, quantityneeded, whereneeded, buyingstatus, importance, store, notes)""")
+        self.cursor.execute("""CREATE VIRTUAL TABLE IF NOT EXISTS todosearch USING fts4(ID, task, whereneeded, importance, category, person, status, notes)""")
+        
+        self.conn.commit()
+        
         
         results = self.search.get()
         
